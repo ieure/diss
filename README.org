@@ -1,0 +1,107 @@
+* Slideshow+
+  :PROPERTIES:
+  :ID:       c6336377-321e-44fb-967f-c9d757b1ce84
+  :END:
+
+  Slideshow+ (or SSP) is a dired-based image slideshow mode, borne out
+  of dissatisfaction with the existing slideshow tools.
+
+
+** Why not =image-next-file=?
+   :PROPERTIES:
+   :ID:       271af254-6135-493e-97e0-3819e6a8f9f4
+   :END:
+
+   This is based on finding the next file in the same directory as the
+   one being viewed, which has numerous disadvantages:
+
+   - Order is based on what =directory-files= thinks, not what the
+     dired buffer (which you likely started viewing images from) uses.
+   - This also means you can’t change the order.
+   - Only navigates files within the same directory, e.g. you can’t
+     use =find-dired= to produce the list of images to view.
+   - /Only/ loops over all images, there’s no way to show start to
+     finish.
+   - Terrible performance for older machines / large directories.
+     Every time you load a new image, it reads every file in the
+     directory and does an O(n) search over them to find the current
+     position.
+   - No way to automatically advance images.
+
+
+** Why not =image-dired-slideshow-start=?
+   :PROPERTIES:
+   :ID:       21de028f-b6c1-48a8-88cb-aaf3dd40de14
+   :END:
+
+   - Requires you to enter the number of images to display, rather
+     than showing them all, which is weird.
+   - It seems to show thumbnails instead of the complete image.
+   - Maybe I’m doing it wrong, but I couldn’t get it to automatically
+     advance images.
+
+
+** Manual mode
+   :PROPERTIES:
+   :ID:       94a18a81-8b61-4402-a09e-a3e1f90b19b8
+   :END:
+
+   This is the easiest to understand.  In a Dired buffer containing a
+   non-zero number of images, press =C-c C-s= (=ssp-start=) to begin.
+   SSP will load the first image; the following bindings are
+   available:
+
+   - =n= / =p=: Move to the next/previous image.  Shadows
+     =image-next-file= / =image-previous-file=, but uses the Dired
+     buffer for the files and order.
+   - =m=: Mark the current image in the Dired buffer, and advance to
+     the next.
+   - =d=: Flag for deletion and advance.
+   - =u=: Unmark and advance.
+   - =c X=: (where =X= is any alphabetic character) Flag image with
+     =X= character, and advance.
+   - =C-c C-q=: Quit SSP.
+   - =C-c C-r=: Enter automatic mode (see below).
+
+
+** Automatic mode
+   :PROPERTIES:
+   :ID:       9391e580-ff4c-431b-b75f-0b26a6c7ee86
+   :END:
+
+   In automatic mode, images are shown in sequence with a delay in
+   between.  You can start automatic mode from a Dired buffer with
+   =C-c C-a=.
+
+   Given a prefix argument between 0-9, delays that many seconds
+   between images.
+
+   Given a prefix argument greater than 9, delays that many
+   milliseconds between images.
+
+   The same bindings are available, but:
+
+   - =n= / =p= will cancel automatic mode, dropping into manual mode.
+   - =C-c C-r=: Resumes automatic mode.
+   - Mark/unmark/flag commands don’t advance images, because they’ll
+     advance in a moment on their own.
+
+
+** Deleting mode
+   :PROPERTIES:
+   :ID:       a0935b12-db01-4bc2-9818-6f80a11f387d
+   :END:
+
+   Deleting mode is a special case of automatic mode, where images are
+   flagged for deletion as they’re viewed, unless they have some other
+   mark already (or you explicitly mark/unmark).
+
+
+** Looping mode
+   :PROPERTIES:
+   :ID:       daae2113-15fd-4925-8892-add8ff002f93
+   :END:
+
+   In a Dired buffer, =C-c C-l= starts looping mode.  When the last
+   (or first) image is reached, playback continues from the first
+   (last).
