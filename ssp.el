@@ -69,39 +69,37 @@
 
     (define-key km "u" 'ssp-unmark)
     (define-key km "d" 'ssp-flag-file-deletion-and-next)
-    (define-key km "m" 'ssp-mark-and-next)
+    (define-key km "m" 'ssp-mark)
     (define-key km "q" 'ssp-pause)
 
-    (define-key km "c a" 'ssp--categorize)
-    (define-key km "c b" 'ssp--categorize)
-    (define-key km "c c" 'ssp--categorize)
-    (define-key km "c d" 'ssp--categorize)
-    (define-key km "c e" 'ssp--categorize)
-    (define-key km "c f" 'ssp--categorize)
-    (define-key km "c g" 'ssp--categorize)
-    (define-key km "c h" 'ssp--categorize)
-    (define-key km "c i" 'ssp--categorize)
-    (define-key km "c j" 'ssp--categorize)
-    (define-key km "c k" 'ssp--categorize)
-    (define-key km "c l" 'ssp--categorize)
-    (define-key km "c m" 'ssp--categorize)
-    (define-key km "c n" 'ssp--categorize)
-    (define-key km "c o" 'ssp--categorize)
-    (define-key km "c p" 'ssp--categorize)
-    (define-key km "c q" 'ssp--categorize)
-    (define-key km "c r" 'ssp--categorize)
-    (define-key km "c s" 'ssp--categorize)
-    (define-key km "c t" 'ssp--categorize)
-    (define-key km "c u" 'ssp--categorize)
-    (define-key km "c v" 'ssp--categorize)
-    (define-key km "c w" 'ssp--categorize)
-    (define-key km "c x" 'ssp--categorize)
-    (define-key km "c y" 'ssp--categorize)
-    (define-key km "c z" 'ssp--categorize)
+    (define-key km "c a" 'ssp-categorize-and-next)
+    (define-key km "c b" 'ssp-categorize-and-next)
+    (define-key km "c c" 'ssp-categorize-and-next)
+    (define-key km "c d" 'ssp-categorize-and-next)
+    (define-key km "c e" 'ssp-categorize-and-next)
+    (define-key km "c f" 'ssp-categorize-and-next)
+    (define-key km "c g" 'ssp-categorize-and-next)
+    (define-key km "c h" 'ssp-categorize-and-next)
+    (define-key km "c i" 'ssp-categorize-and-next)
+    (define-key km "c j" 'ssp-categorize-and-next)
+    (define-key km "c k" 'ssp-categorize-and-next)
+    (define-key km "c l" 'ssp-categorize-and-next)
+    (define-key km "c m" 'ssp-categorize-and-next)
+    (define-key km "c n" 'ssp-categorize-and-next)
+    (define-key km "c o" 'ssp-categorize-and-next)
+    (define-key km "c p" 'ssp-categorize-and-next)
+    (define-key km "c q" 'ssp-categorize-and-next)
+    (define-key km "c r" 'ssp-categorize-and-next)
+    (define-key km "c s" 'ssp-categorize-and-next)
+    (define-key km "c t" 'ssp-categorize-and-next)
+    (define-key km "c u" 'ssp-categorize-and-next)
+    (define-key km "c v" 'ssp-categorize-and-next)
+    (define-key km "c w" 'ssp-categorize-and-next)
+    (define-key km "c x" 'ssp-categorize-and-next)
+    (define-key km "c y" 'ssp-categorize-and-next)
+    (define-key km "c z" 'ssp-categorize-and-next)
 
     (define-key km "\C-c\C-q" 'ssp-mode-quit)
-    (define-key km "\C-c\C-r" 'ssp-automatic-mode-resume)
-    (define-key km "\\" 'ssp-automatic-mode-resume)
 
     km)
   "Keymap for SSP-IMAGE-MODE.")
@@ -129,8 +127,9 @@
     (define-key km "n" 'ssp-automatic-mode-next)
     (define-key km "p" 'ssp-automatic-mode-previous)
     (define-key km "\C-c\C-q" 'ssp-mode-quit)
-    (define-key km "\C-c\C-r" 'ssp-automatic-mode-resume)
-    (define-key km "\\" 'ssp-automatic-mode-resume)
+    (define-key km "\C-c\C-r" 'ssp-automatic-mode-pause-resume)
+    (define-key km "\\" 'ssp-automatic-mode-pause-resume)
+    (define-key km "]" 'ssp-automatic-mode-pause-resume)
 
     km)
   "Keymap for SSP-AUTOMATIC-IMAGE-MODE.")
@@ -170,7 +169,7 @@
           (setq ssp-automatic-image-mode--timer
                 (run-with-timer ssp-automatic-image-mode--delay nil
                                 (lambda ()
-                                  (if (buffer-live-p image-buffer)
+                                  (if (and (not ssp-automatic-mode--paused) (buffer-live-p image-buffer))
                                       (with-current-buffer image-buffer
                                         (ssp-find-next))))))))
 
@@ -181,11 +180,12 @@
   (when ssp-automatic-image-mode--timer
     (cancel-timer ssp-automatic-image-mode--timer)))
 
-(defun ssp-automatic-mode-resume (&optional arg)
-  "Resume automatic slideshow."
+(defun ssp-automatic-mode-pause-resume (&optional arg)
+  "Pause or resume automatic slideshow."
   (interactive "P")
-  (setq ssp-automatic-mode--paused nil)
-  (ssp-find-next))
+  (setq ssp-automatic-mode--paused (not ssp-automatic-mode--paused))
+  (unless ssp-automatic-mode--paused
+    (ssp-find-next)))
 
 (defun ssp-automatic-mode-next ()
   (interactive)
@@ -273,7 +273,9 @@ If ARG is greater than 9, delay that many milliseconds."
   (if-let ((next (ssp--navigate 1)))
       (find-alternate-file next)
     (message "End of images.")
-    (ssp-mode -1)))
+    (if ssp-automatic-image-mode
+        (ssp-automatic-image-mode -1)
+      (ssp-mode -1))))
 
 (defun ssp--navigate* (arg)
   "Move forwards or backwards ARG images in `ssp-mode--dired-buffer'."
@@ -345,18 +347,19 @@ Advances to the next image, unless an automatic slideshow is
 currently playing."
   (interactive)
   (ssp--mark-with-char "D" t)
-  (unless ssp-mode--auto (ssp-find-next)))
+  (unless (and ssp-automatic-mode (not ssp-automatic-mode--paused))
+    (ssp-find-next)))
 
-(defun ssp-mark ()
+(defun ssp-mark-and-next ()
   "Mark the current image in its dired buffer.
 
 Advances to the next image, unless an automatic slideshow is
 currently playing."
   (interactive)
   (ssp--mark-with-char "*" t)
-  (unless ssp-mode--auto (ssp-find-next)))
+  (unless ssp-automatic-mode (ssp-find-next)))
 
-(defun ssp-unmark ()
+(defun ssp-unmark-and-next ()
   "Mark the current image in its dired buffer.
 
 Advances to the next image, unless an automatic slideshow is
@@ -365,16 +368,16 @@ currently playing."
   (with-current-buffer ssp-mode--dired-buffer
     (goto-char ssp-mode--position)
     (dired-unmark nil nil))
-  (unless ssp-mode--auto (ssp-find-next)))
+  (unless ssp-automatic-mode (ssp-find-next)))
 
-(defun ssp-categorize ()
+(defun ssp-categorize-and-next ()
   "Mark this image, using the current input command as the character.
 
 Advances to the next image, unless an automatic slideshow is
 currently playing."
   (interactive)
   (ssp--mark-with-char last-command-event t)
-  (unless ssp-mode--auto (ssp-find-next)))
+  (unless ssp-automatic-mode (ssp-find-next)))
 
 (define-key dired-mode-map "\C-c\C-s" 'ssp-start)
 (define-key dired-mode-map "\C-c\C-a" 'ssp-automatic-start)
