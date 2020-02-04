@@ -26,48 +26,101 @@
 
 (require 'dired)
 
-(defvar ssp-mode--dired-buffer nil
-  "Dired buffer containing images to display in the slideshow.")
+(defvar ssp--active nil
+  "List of active slideshows.  Each element is a cons cell
+  of (IMAGE . SSP-BUFFER).")
 
-(defvar ssp-mode--position nil
-  "Current position in the dired buffer.")
+(defvar ssp--buffer nil
+  "SSP buffer for a particular image.")
+(make-variable-buffer-local 'ssp--buffer)
 
-(defvar ssp-mode--loop nil
+(defvar ssp--loop nil
   "When non-NIL, start over at the beginning when the end is reached.")
+(make-variable-buffer-local 'ssp--loop)
 
- ;; Minor mode for controlling the slideshow.
+(defvar ssp--step 1
+  "How many images to advance at a time.")
+(make-variable-buffer-local 'ssp--step)
 
-(define-minor-mode ssp-mode
-  "Minor mode for dired-based image slideshow."
-  nil " SSP"
-  nil
-  :global t
+(defvar ssp--paused nil
+  "Whether the slideshow is paused")
+(make-variable-buffer-local 'ssp--paused)
 
-  (if ssp-mode
-      ;; Enabling
-      (progn
-        (setq ssp-mode--dired-buffer (current-buffer)
-              ssp-mode--position (point))
+(defvar ssp--automatic-delay nil
+  "When non-nil, delay this long before going to the next image.")
+(make-variable-buffer-local 'ssp--loop)
 
-        (find-file (ssp--navigate 1))
-        ;; (delete-other-windows)
-        (add-hook 'image-mode-hook 'ssp-image-mode))
+(defvar ssp--image-regexp (image-file-name-regexp)
+  "Regular expression matching images.")
+(make-variable-buffer-local 'ssp--image-regexp)
 
-    ;; Disabling
-    (setq ssp-mode--dired-buffer nil
-          ssp-mode--position nil)
-    (ssp-image-mode -1)
-    (remove-hook 'image-mode-hook 'ssp-image-mode)
-    (remove-hook 'image-mode-hook 'ssp--flag-file-deletion)))
+(define-derived-mode ssp-mode dired-mode "SSP"
+  "Major mode for dired slideshows."
+
+  (unless (eq major-mode 'dired-mode)
+    (error "Must be started from Dired."))
+  (let ((buf (clone-indirect-buffer (format "*ssp %s*" (buffer-name)) nil)))
+    (with-current-buffer
+        (setq ssp--loop nil
+              ssp--automatic-delay nil
+              ssp--image-regexp (image-file-name-regexp))
+      (add-to-list 'ssp--active-shows (cons nil buf)))
+    buf))
+
+(defun ssp--navigate** (arg)
+  "Move forwards or backwards ARG images."
+  (save-match-data
+    (cl-loop with n = (abs arg)
+             with a = (if (< arg 0) -1 1)
+             until (or (if (< arg 0) (bobp) (eobp))
+                       (zerop n))
+             do (dired-next-line a)
+             for fn = (dired-get-filename t t)
+             when (string-match ssp--image-regexp (or fn ""))
+             do (decf n)
+             finally return fn)))
+
+(defun ssp--navigate* (arg)
+  "Move forwards or backwards ARG images."
+  (if-let ((file (ssp--navigate* arg)))
+      file
+    (when ssp-mode--loop
+      (goto-char (if (< arg 0) (point-max) (point-min)))
+      (ssp--navigate* arg))))
+
+(defun ssp--navigate (arg)
+  "Move forwards or backwards ARG images."
+  (let ((file (ssp--navigate* arg)))
+    (cl-loop for ss in ssp--active
+             until (eq (current-buffer) (cdr ss))
+             (finally (setf (car ss) (expand-file-name file))))
+    file))
+
+(defun ssp-start (arg)
+  (interactive "p")
+  (ssp-mode)
+  (ssp--step (or arg ssp--step)))
+
+(defun ssp--image-hook ()
+  (when-let ((slideshow (memq (expand-file-name (buffer-file-name))
+                              ssp--active)))
+    (setq ssp--buffer (cdr slideshow))
+    (ssp-image-mode)))
+
+(defun ssp-next (&optional arg)
+  (interactive "p")
+  (find-alternate-file (ssp--navigate arg)))
+
+(defun ssp-previous (&optional arg)
+  (interactive "p")
+  (find-alternate-file (ssp--navigate (* -1 arg))))
 
 ;; Minor mode for images in the slideshow.
 
-(setq ssp-image-mode-map
+(defvar ssp-image-mode-map
   (let ((km (make-sparse-keymap)))
-    (define-key km "p" 'ssp-find-previous)
-    (define-key km (kbd "<mouse-1>") 'ssp-find-previous)
-    (define-key km (kbd "<mouse-2>") 'ssp-unmark)
-    (define-key km "n" 'ssp-find-next)
+    (define-key km "p" 'ssp-previous)
+    (define-key km "n" 'ssp-next)
 
     (define-key km "u" 'ssp-unmark)
     (define-key km "d" 'ssp-flag-file-deletion-and-next)
@@ -104,13 +157,50 @@
     (define-key km "\C-c\C-q" 'ssp-mode-quit)
 
     km)
-  ;; "Keymap for SSP-IMAGE-MODE."
-  )
+  "Keymap for SSP-IMAGE-MODE.")
 
 (define-minor-mode ssp-image-mode
   "Minor mode for dired-based image slideshow."
   nil nil
-  ssp-image-mode-map)
+  ssp-image-mode-map
+
+  (when ssp-image-mode
+    (let ((image-buffer (current-buffer)))
+      (with-current-buffer ssp--buffer
+        (when (and ssp--automatic-delay (not ssp--paused))
+          (setq ssp--timer
+                (run-with-timer
+                 ssp--automatic-delay nil
+                 (lambda ()
+                   (if (and (not ssp--paused)
+                            (buffer-live-p image-buffer))
+                       (with-current-buffer image-buffer
+                         (ssp-next)))))))))))
+
+
+
+(define-minor-mode ssp-mode
+  "Minor mode for dired-based image slideshow."
+  nil " SSP"
+  nil
+  :global t
+
+  (if ssp-mode
+      ;; Enabling
+      (progn
+        (setq ssp-mode--dired-buffer (current-buffer)
+              ssp-mode--position (point))
+
+        (find-file (ssp--navigate 1))
+        ;; (delete-other-windows)
+        (add-hook 'image-mode-hook 'ssp-image-mode))
+
+    ;; Disabling
+    (setq ssp-mode--dired-buffer nil
+          ssp-mode--position nil)
+    (ssp-image-mode -1)
+    (remove-hook 'image-mode-hook 'ssp-image-mode)
+    (remove-hook 'image-mode-hook 'ssp--flag-file-deletion)))
 
  ;; Automatic mode.
 
@@ -282,28 +372,6 @@ If ARG is greater than 9, delay that many milliseconds."
     (if ssp-automatic-image-mode
         (ssp-automatic-image-mode -1)
       (ssp-mode -1))))
-
-(defun ssp--navigate* (arg)
-  "Move forwards or backwards ARG images in `ssp-mode--dired-buffer'."
-  (when ssp-mode--dired-buffer
-    (let ((image-file-name (buffer-file-name)))
-      (with-current-buffer ssp-mode--dired-buffer
-        (save-excursion
-          (goto-char (or ssp-mode--position (point-min)))
-
-          (when (string= image-file-name
-                         (or (ignore-errors (dired-get-file-for-visit)) ""))
-            (dired-next-line arg))
-
-          (save-match-data
-            (let ((image))
-              (while (not (or image (if (< arg 0) (bobp) (eobp))))
-                (if (string-match (image-file-name-regexp) (or (dired-get-filename t t) ""))
-                    (if-let ((extant-file (ignore-errors (dired-get-file-for-visit))))
-                        (setq image extant-file
-                              ssp-mode--position (point)))
-                  (dired-next-line arg)))
-              image)))))))
 
 (defun ssp--navigate (arg)
   "Move forwards or backwards ARG images in `ssp-mode--dired-buffer'."
