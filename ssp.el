@@ -62,9 +62,11 @@
 
 ;; Minor mode for images in the slideshow.
 
-(defvar ssp-image-mode-map
+(setq ssp-image-mode-map
   (let ((km (make-sparse-keymap)))
     (define-key km "p" 'ssp-find-previous)
+    (define-key km (kbd "<mouse-1>") 'ssp-find-previous)
+    (define-key km (kbd "<mouse-2>") 'ssp-unmark)
     (define-key km "n" 'ssp-find-next)
 
     (define-key km "u" 'ssp-unmark)
@@ -72,37 +74,38 @@
     (define-key km "m" 'ssp-mark)
     (define-key km "q" 'ssp-pause)
 
-    (define-key km "c a" 'ssp-categorize-and-next)
-    (define-key km "c b" 'ssp-categorize-and-next)
-    (define-key km "c c" 'ssp-categorize-and-next)
-    (define-key km "c d" 'ssp-categorize-and-next)
-    (define-key km "c e" 'ssp-categorize-and-next)
-    (define-key km "c f" 'ssp-categorize-and-next)
-    (define-key km "c g" 'ssp-categorize-and-next)
-    (define-key km "c h" 'ssp-categorize-and-next)
-    (define-key km "c i" 'ssp-categorize-and-next)
-    (define-key km "c j" 'ssp-categorize-and-next)
-    (define-key km "c k" 'ssp-categorize-and-next)
-    (define-key km "c l" 'ssp-categorize-and-next)
-    (define-key km "c m" 'ssp-categorize-and-next)
-    (define-key km "c n" 'ssp-categorize-and-next)
-    (define-key km "c o" 'ssp-categorize-and-next)
-    (define-key km "c p" 'ssp-categorize-and-next)
-    (define-key km "c q" 'ssp-categorize-and-next)
-    (define-key km "c r" 'ssp-categorize-and-next)
-    (define-key km "c s" 'ssp-categorize-and-next)
-    (define-key km "c t" 'ssp-categorize-and-next)
-    (define-key km "c u" 'ssp-categorize-and-next)
-    (define-key km "c v" 'ssp-categorize-and-next)
-    (define-key km "c w" 'ssp-categorize-and-next)
-    (define-key km "c x" 'ssp-categorize-and-next)
-    (define-key km "c y" 'ssp-categorize-and-next)
-    (define-key km "c z" 'ssp-categorize-and-next)
+    (define-key km "ca" 'ssp-categorize-and-next)
+    (define-key km "cb" 'ssp-categorize-and-next)
+    (define-key km "cc" 'ssp-categorize-and-next)
+    (define-key km "cd" 'ssp-categorize-and-next)
+    (define-key km "ce" 'ssp-categorize-and-next)
+    (define-key km "cf" 'ssp-categorize-and-next)
+    (define-key km "cg" 'ssp-categorize-and-next)
+    (define-key km "ch" 'ssp-categorize-and-next)
+    (define-key km "ci" 'ssp-categorize-and-next)
+    (define-key km "cj" 'ssp-categorize-and-next)
+    (define-key km "ck" 'ssp-categorize-and-next)
+    (define-key km "cl" 'ssp-categorize-and-next)
+    (define-key km "cm" 'ssp-categorize-and-next)
+    (define-key km "cn" 'ssp-categorize-and-next)
+    (define-key km "co" 'ssp-categorize-and-next)
+    (define-key km "cp" 'ssp-categorize-and-next)
+    (define-key km "cq" 'ssp-categorize-and-next)
+    (define-key km "cr" 'ssp-categorize-and-next)
+    (define-key km "cs" 'ssp-categorize-and-next)
+    (define-key km "ct" 'ssp-categorize-and-next)
+    (define-key km "cu" 'ssp-categorize-and-next)
+    (define-key km "cv" 'ssp-categorize-and-next)
+    (define-key km "cw" 'ssp-categorize-and-next)
+    (define-key km "cx" 'ssp-categorize-and-next)
+    (define-key km "cy" 'ssp-categorize-and-next)
+    (define-key km "cz" 'ssp-categorize-and-next)
 
     (define-key km "\C-c\C-q" 'ssp-mode-quit)
 
     km)
-  "Keymap for SSP-IMAGE-MODE.")
+  ;; "Keymap for SSP-IMAGE-MODE."
+  )
 
 (define-minor-mode ssp-image-mode
   "Minor mode for dired-based image slideshow."
@@ -120,7 +123,7 @@
    ((< arg 10) arg)                     ; seconds
    (t (/ arg 1000.0))))                 ; milliseconds
 
-(defvar ssp-automatic-image-mode-map
+(setq ssp-automatic-image-mode-map
   (let ((km (copy-keymap ssp-image-mode-map)))
     (define-key km "q" 'ssp-pause)
 
@@ -130,9 +133,11 @@
     (define-key km "\C-c\C-r" 'ssp-automatic-mode-pause-resume)
     (define-key km "\\" 'ssp-automatic-mode-pause-resume)
     (define-key km "]" 'ssp-automatic-mode-pause-resume)
+    (define-key km (kbd "<mouse-3>") 'ssp-automatic-mode-pause-resume)
 
     km)
-  "Keymap for SSP-AUTOMATIC-IMAGE-MODE.")
+  ;; "Keymap for SSP-AUTOMATIC-IMAGE-MODE."
+  )
 
 (define-minor-mode ssp-automatic-mode
   "Minor mode for dired-based image slideshow."
@@ -273,6 +278,7 @@ If ARG is greater than 9, delay that many milliseconds."
   (if-let ((next (ssp--navigate 1)))
       (find-alternate-file next)
     (message "End of images.")
+    (pop-to-buffer (get-buffer ssp-mode--dired-buffer))
     (if ssp-automatic-image-mode
         (ssp-automatic-image-mode -1)
       (ssp-mode -1))))
