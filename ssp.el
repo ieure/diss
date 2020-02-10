@@ -205,48 +205,50 @@
 
  ;; Minor mode for images in the slideshow.
 
-(setq ssp-image-mode-map
-      (let ((km (make-sparse-keymap)))
-        (define-key km "p" 'ssp-image-mode-previous)
-        (define-key km "n" 'ssp-image-mode-next)
-        (define-key km "q" 'ssp-image-mode-quit)
+(defvar ssp-image-mode-map
+  (let ((km (make-sparse-keymap)))
+    (define-key km "p" 'ssp-image-mode-previous)
+    (define-key km (kbd "<mouse-1>") 'ssp-image-mode-previous)
+    (define-key km "n" 'ssp-image-mode-next)
+    (define-key km "q" 'ssp-image-mode-quit)
 
-        ;; (define-key km "u" 'ssp-unmark)
-        ;; (define-key km "d" 'ssp-flag-file-deletion-and-next)
-        ;; (define-key km "m" 'ssp-mark)
+    (define-key km "\\" 'ssp-image-mode-toggle-paused)
+    (define-key km (kbd "<mouse-3>") 'ssp-image-mode-toggle-paused)
 
-        ;; (define-key km "ca" 'ssp-categorize-and-next)
-        ;; (define-key km "cb" 'ssp-categorize-and-next)
-        ;; (define-key km "cc" 'ssp-categorize-and-next)
-        ;; (define-key km "cd" 'ssp-categorize-and-next)
-        ;; (define-key km "ce" 'ssp-categorize-and-next)
-        ;; (define-key km "cf" 'ssp-categorize-and-next)
-        ;; (define-key km "cg" 'ssp-categorize-and-next)
-        ;; (define-key km "ch" 'ssp-categorize-and-next)
-        ;; (define-key km "ci" 'ssp-categorize-and-next)
-        ;; (define-key km "cj" 'ssp-categorize-and-next)
-        ;; (define-key km "ck" 'ssp-categorize-and-next)
-        ;; (define-key km "cl" 'ssp-categorize-and-next)
-        ;; (define-key km "cm" 'ssp-categorize-and-next)
-        ;; (define-key km "cn" 'ssp-categorize-and-next)
-        ;; (define-key km "co" 'ssp-categorize-and-next)
-        ;; (define-key km "cp" 'ssp-categorize-and-next)
-        ;; (define-key km "cq" 'ssp-categorize-and-next)
-        ;; (define-key km "cr" 'ssp-categorize-and-next)
-        ;; (define-key km "cs" 'ssp-categorize-and-next)
-        ;; (define-key km "ct" 'ssp-categorize-and-next)
-        ;; (define-key km "cu" 'ssp-categorize-and-next)
-        ;; (define-key km "cv" 'ssp-categorize-and-next)
-        ;; (define-key km "cw" 'ssp-categorize-and-next)
-        ;; (define-key km "cx" 'ssp-categorize-and-next)
-        ;; (define-key km "cy" 'ssp-categorize-and-next)
-        ;; (define-key km "cz" 'ssp-categorize-and-next)
+    (define-key km "u" 'ssp-image-mode-unmark-and-next)
+    (define-key km "d" 'ssp-image-mode-delete-and-next)
+    (define-key km "m" 'ssp-image-mode-mark-and-next)
 
-        ;; (define-key km "\C-c\C-q" 'ssp-mode-quit)
+    (define-key km "ca" 'ssp-image-mode-categorize-and-next)
+    (define-key km "cb" 'ssp-image-mode-categorize-and-next)
+    (define-key km "cc" 'ssp-image-mode-categorize-and-next)
+    (define-key km "cd" 'ssp-image-mode-categorize-and-next)
+    (define-key km "ce" 'ssp-image-mode-categorize-and-next)
+    (define-key km "cf" 'ssp-image-mode-categorize-and-next)
+    (define-key km "cg" 'ssp-image-mode-categorize-and-next)
+    (define-key km "ch" 'ssp-image-mode-categorize-and-next)
+    (define-key km "ci" 'ssp-image-mode-categorize-and-next)
+    (define-key km "cj" 'ssp-image-mode-categorize-and-next)
+    (define-key km "ck" 'ssp-image-mode-categorize-and-next)
+    (define-key km "cl" 'ssp-image-mode-categorize-and-next)
+    (define-key km "cm" 'ssp-image-mode-categorize-and-next)
+    (define-key km "cn" 'ssp-image-mode-categorize-and-next)
+    (define-key km "co" 'ssp-image-mode-categorize-and-next)
+    (define-key km "cp" 'ssp-image-mode-categorize-and-next)
+    (define-key km "cq" 'ssp-image-mode-categorize-and-next)
+    (define-key km "cr" 'ssp-image-mode-categorize-and-next)
+    (define-key km "cs" 'ssp-image-mode-categorize-and-next)
+    (define-key km "ct" 'ssp-image-mode-categorize-and-next)
+    (define-key km "cu" 'ssp-image-mode-categorize-and-next)
+    (define-key km "cv" 'ssp-image-mode-categorize-and-next)
+    (define-key km "cw" 'ssp-image-mode-categorize-and-next)
+    (define-key km "cx" 'ssp-image-mode-categorize-and-next)
+    (define-key km "cy" 'ssp-image-mode-categorize-and-next)
+    (define-key km "cz" 'ssp-image-mode-categorize-and-next)
 
-        km)
-      ;; "Keymap for SSP-IMAGE-MODE."
-      )
+    km)
+  "Keymap for SSP-IMAGE-MODE.")
+
 
 (defun ssp-image-mode--automatic (ss image-buffer)
   "Automatically advance to the next image."
@@ -256,7 +258,7 @@
       (when mark
         (ssp-mode--mark ss (buffer-file-name) mark))
       (with-current-buffer image-buffer
-        (ssp-image-mode-next)))))
+        (ssp--move ssp-image-mode--slideshow (oref ss step))))))
 
 (define-minor-mode ssp-image-mode
   "Minor mode for dired-based image slideshow."
@@ -311,17 +313,17 @@
 
 (defun ssp-image-mode-mark-and-next ()
   (interactive)
-  (ssp-mode--mark ?m t)
+  (ssp-mode--mark ssp-image-mode--slideshow (buffer-file-name) ?m t)
   (ssp-image-mode-next))
 
 (defun ssp-image-mode-unmark-and-next ()
   (interactive)
-
+  (ssp-mode--unmark ssp-image-mode--slideshow (buffer-file-name))
   (ssp-image-mode-next))
 
 (defun ssp-image-mode-delete-and-next ()
   (interactive)
-  (ssp-mode--mark ?D t)
+  (ssp-mode--mark ssp-image-mode--slideshow (buffer-file-name) ?D t)
   (ssp-image-mode-next))
 
 (defun ssp-image-mode-quit (&optional arg)
@@ -329,16 +331,20 @@
   (oset ssp-image-mode--slideshow paused t)
   (bury-buffer))
 
+(defun ssp-image-mode-toggle-paused ()
+  (interactive)
+  (with-slots (paused step) ssp-image-mode--slideshow
+    (setf paused (not paused))
+    (ssp--move ssp-image-mode--slideshow step)))
+
 (defun ssp-image-mode-categorize-and-next ()
   "Mark the current image in its dired buffer.
 
 Advances to the next image, unless an automatic slideshow is
 currently playing."
   (interactive)
-  (with-current-buffer ssp-mode--dired-buffer
-    (goto-char ssp-mode--position)
-    (dired-unmark nil nil))
-  (unless ssp-automatic-mode (ssp-find-next)))
+  (ssp-mode--mark ssp-image-mode--slideshow (buffer-file-name) last-command-event t)
+  (ssp-image-mode-next))
 
 (provide 'ssp)
 ;;; ssp.el ends here
