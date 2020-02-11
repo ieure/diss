@@ -331,20 +331,16 @@
   (oset ssp-image-mode--slideshow paused t)
   (bury-buffer))
 
+(defun ssp-image-mode-categorize-and-next ()
+  (interactive)
+  (ssp-mode--mark ssp-image-mode--slideshow (buffer-file-name) last-command-event t)
+  (ssp-image-mode-next))
+
 (defun ssp-image-mode-toggle-paused ()
   (interactive)
   (with-slots (paused step) ssp-image-mode--slideshow
     (setf paused (not paused))
-    (ssp--move ssp-image-mode--slideshow step)))
-
-(defun ssp-image-mode-categorize-and-next ()
-  "Mark the current image in its dired buffer.
-
-Advances to the next image, unless an automatic slideshow is
-currently playing."
-  (interactive)
-  (ssp-mode--mark ssp-image-mode--slideshow (buffer-file-name) last-command-event t)
-  (ssp-image-mode-next))
+    (ssp-image-mode--automatic ssp-image-mode--slideshow (current-buffer))))
 
 (provide 'ssp)
 ;;; ssp.el ends here
