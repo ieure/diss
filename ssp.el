@@ -339,8 +339,9 @@
 (defun ssp-image-mode-toggle-paused ()
   (interactive)
   (with-slots (paused step) ssp-image-mode--slideshow
-    (setf paused (not paused))
-    (ssp-image-mode--automatic ssp-image-mode--slideshow (current-buffer))))
+    (if (setf paused (not paused))
+        (cancel-timer ssp--timer)
+      (ssp-image-mode--automatic ssp-image-mode--slideshow (current-buffer)))))
 
 (provide 'ssp)
 ;;; ssp.el ends here
