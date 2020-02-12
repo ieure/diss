@@ -81,6 +81,12 @@
                  when (ssp-slideshow-active? ss)
                  collect ss)))
 
+(defvar ssp-mode-map
+  (let ((km (make-composed-keymap '(dired-mode-map))))
+    (define-key km "x" 'ssp-do-flagged-delete)
+    (define-key km "\C-c\C-r" 'ssp-resume)))
+
+
 (define-derived-mode ssp-mode dired-mode "SSP"
   "Major mode for dired slideshows."
   (add-hook 'image-mode-hook 'ssp-image-mode--maybe-enable))
@@ -202,6 +208,25 @@
 
         ;; Return file
         file))))
+
+(defun ssp-do-flagged-delete ()
+  (interactive)
+  (let ((delete-by-moving-to-trash (if current-prefix-arg (not delete-by-moving-to-trash)
+                                     delete-by-moving-to-trash)))
+    (dired-do-flagged-delete)))
+
+(defun ssp-resume ()
+  (interactive)
+  (with-slots (current) ssp-mode--slideshow
+    (if-let ((buf (get-file-buffer current)))
+        (switch-to-buffer buf)
+      (find-file current))))
+
+(defun ssp-move-here ()
+  (interactive)
+  (with-slots (current) ssp-mode--slideshow
+    (setf current (ssp-mode--dired-expanded-filename))
+    (ssp-resume)))
 
  ;; Minor mode for images in the slideshow.
 
