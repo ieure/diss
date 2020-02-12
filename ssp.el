@@ -55,6 +55,12 @@
 (cl-defmethod ssp-slideshow-active? ((this ssp-slideshow))
   (buffer-live-p (oref this buffer)))
 
+(cl-defmethod ssp-slideshow-pause ((this ssp-slideshow))
+  (with-slots (paused step) ssp-image-mode--slideshow
+    (setf paused t)
+    (when ssp--timer
+      (cancel-timer ssp--timer))))
+
 (defvar ssp--active nil
   "List of active slideshows.  Each element is a cons cell
   of (IMAGE . SSP-BUFFER).")
@@ -322,13 +328,13 @@
 (defun ssp-image-mode-next (&optional arg)
   "Move ARG images forward in the slideshow."
   (interactive "p")
-  (oset ssp-image-mode--slideshow paused t)
+  (ssp-slideshow-pause ssp-image-mode--slideshow)
   (ssp--move ssp-image-mode--slideshow arg))
 
 (defun ssp-image-mode-previous (&optional arg)
   "Move ARG images back in the slideshow."
   (interactive "p")
-  (oset ssp-image-mode--slideshow paused t)
+  (ssp-slideshow-pause ssp-image-mode--slideshow)
   (ssp--move ssp-image-mode--slideshow (* -1 arg)))
 
 (defun ssp-image-mode-categorize-and-next ()
