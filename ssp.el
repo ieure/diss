@@ -90,7 +90,8 @@
 (defvar ssp-mode-map
   (let ((km (make-composed-keymap '(dired-mode-map))))
     (define-key km "x" 'ssp-do-flagged-delete)
-    (define-key km "\C-c\C-r" 'ssp-resume)))
+    (define-key km "\C-c\C-r" 'ssp-resume)
+    km))
 
 
 (define-derived-mode ssp-mode dired-mode "SSP"
