@@ -144,7 +144,7 @@
   (let ((dsal dired-subdir-alist))
     (switch-to-buffer (clone-indirect-buffer (format "*ssp %s*" dired-directory) nil))
     (ssp-mode)
-    (setq dired-subdir-alist dsal)
+    (setq-local dired-subdir-alist dsal)
     (goto-char (point-min))
     (add-to-list 'ssp--active (setq ssp-mode--slideshow (apply 'ssp-slideshow :buffer (current-buffer) args)))
     (if-let ((file (ssp-mode--navigate ssp-mode--slideshow)))
@@ -157,15 +157,15 @@
 
 (defun ssp-start-looping ()
   (interactive)
-  (ssp-start* :step 1 :delay .5 :paused nil :loop t))
+  (ssp-start* :step 1 :delay .35 :paused nil :loop t))
 
 (defun ssp-start-automatic ()
   (interactive)
-  (ssp-start* :step 1 :delay .5 :paused nil))
+  (ssp-start* :step 1 :delay .35 :paused nil))
 
 (defun ssp-start-deleting ()
   (interactive)
-  (ssp-start* :step 1 :delay .5 :paused nil :mark ?D))
+  (ssp-start* :step 1 :delay .35 :paused nil :mark ?D))
 
 (define-key dired-mode-map "\C-c\C-s" 'ssp-start)
 (define-key dired-mode-map "\C-c\C-a" 'ssp-start-automatic)
@@ -251,45 +251,73 @@
     (define-key km "d" 'ssp-image-mode-delete-and-next)
     (define-key km "m" 'ssp-image-mode-mark-and-next)
 
-    (define-key km "ca" 'ssp-image-mode-categorize-and-next)
-    (define-key km "cb" 'ssp-image-mode-categorize-and-next)
-    (define-key km "cc" 'ssp-image-mode-categorize-and-next)
-    (define-key km "cd" 'ssp-image-mode-categorize-and-next)
-    (define-key km "ce" 'ssp-image-mode-categorize-and-next)
-    (define-key km "cf" 'ssp-image-mode-categorize-and-next)
-    (define-key km "cg" 'ssp-image-mode-categorize-and-next)
-    (define-key km "ch" 'ssp-image-mode-categorize-and-next)
-    (define-key km "ci" 'ssp-image-mode-categorize-and-next)
-    (define-key km "cj" 'ssp-image-mode-categorize-and-next)
-    (define-key km "ck" 'ssp-image-mode-categorize-and-next)
-    (define-key km "cl" 'ssp-image-mode-categorize-and-next)
-    (define-key km "cm" 'ssp-image-mode-categorize-and-next)
-    (define-key km "cn" 'ssp-image-mode-categorize-and-next)
-    (define-key km "co" 'ssp-image-mode-categorize-and-next)
-    (define-key km "cp" 'ssp-image-mode-categorize-and-next)
-    (define-key km "cq" 'ssp-image-mode-categorize-and-next)
-    (define-key km "cr" 'ssp-image-mode-categorize-and-next)
-    (define-key km "cs" 'ssp-image-mode-categorize-and-next)
-    (define-key km "ct" 'ssp-image-mode-categorize-and-next)
-    (define-key km "cu" 'ssp-image-mode-categorize-and-next)
-    (define-key km "cv" 'ssp-image-mode-categorize-and-next)
-    (define-key km "cw" 'ssp-image-mode-categorize-and-next)
-    (define-key km "cx" 'ssp-image-mode-categorize-and-next)
-    (define-key km "cy" 'ssp-image-mode-categorize-and-next)
-    (define-key km "cz" 'ssp-image-mode-categorize-and-next)
+    (define-key km "x" 'ssp-image-mode-fit-to-width)
+    (define-key km "y" 'ssp-image-mode-fit-to-height)
+    (define-key km "f" 'ssp-image-mode-smart-fit)
+    (define-key km "0" 'image-transform-reset)
 
+    (define-key km "c" 'ssp-image-mode-categorize-and-next)
     km)
   "Keymap for SSP-IMAGE-MODE.")
 
+(defun ssp-image-mode--window-size ()
+  (cl-destructuring-bind (left top right bottom) (window-edges nil t nil t)
+    (cons (- right left) (- bottom top))))
+
+(defun ssp-image-mode-fit-to-height ()
+  "Fit the current image to the height of the current window.
+This command has no effect unless Emacs is compiled with
+ImageMagick support."
+  (interactive)
+  (let ((image-transform-resize 'fit-height))
+    (image-toggle-display-image)))
+
+(defun ssp-image-mode-fit-to-width ()
+  "Fit the current image to the width of the current window.
+This command has no effect unless Emacs is compiled with
+ImageMagick support."
+  (interactive)
+  (let ((image-transform-resize 'fit-width))
+    (image-toggle-display-image)))
+
+(defun ssp-image-mode-smart-fit ()
+  "Fit the image to the window it's displayed in."
+  (interactive)
+  (cl-destructuring-bind ((iw . ih) (ww . wh))
+      (list (image-size (image-get-display-property) t)
+            (ssp-image-mode--window-size))
+    (let ((img-aspect (/ iw (float ih)))
+          (win-aspect (/ ww (float wh))))
+      (if (>= img-aspect win-aspect)
+          (ssp-image-mode-fit-to-width)
+        (ssp-image-mode-fit-to-height)))))
+
+(defun ssp-image-mode--automatic-scroll (delay)
+  (interactive)
+  (let ((last))
+    (while (not (equal last (setq last (image-scroll-up 10))))
+      (sit-for delay))))
 
 (defun ssp-image-mode--automatic (ss image-buffer)
   "Automatically advance to the next image."
   (with-slots (paused mark) ss
     (when (and (ssp-slideshow-active? ss)
-               (not paused))
-      (when mark
-        (ssp-mode--mark ss (buffer-file-name) mark))
+               (not paused)
+               (not (minibufferp)))
       (with-current-buffer image-buffer
+        (when mark
+          (ssp-mode--mark ss (buffer-file-name) mark))
+        (ssp--move ssp-image-mode--slideshow (oref ss step))))))
+
+(defun ssp-image-mode--automatic-move (ss image-buffer)
+  "Automatically advance to the next image."
+  (with-slots (paused mark) ss
+    (when (and (ssp-slideshow-active? ss)
+               (not paused)
+               (not (minibufferp)))
+      (with-current-buffer image-buffer
+        (when mark
+          (ssp-mode--mark ss (buffer-file-name) mark))
         (ssp--move ssp-image-mode--slideshow (oref ss step))))))
 
 (define-minor-mode ssp-image-mode
@@ -300,11 +328,14 @@
   (when ssp-image-mode
     (let ((image-buffer (current-buffer))
           (ss ssp-image-mode--slideshow))
+      (ssp-image-mode-smart-fit)
       (with-slots (paused delay) ss
         (when (and delay (not paused))
-          (thread-last (apply-partially 'ssp-image-mode--automatic ss image-buffer)
-            (run-with-timer delay nil)
-            (setq ssp--timer)))))))
+          (setq ssp--timer
+                (run-with-timer
+                 delay nil
+                 (lambda ()
+                   (ssp-image-mode--automatic-move ss image-buffer)))))))))
 
 (defun ssp-image-mode--slideshow-for (file)
   (cl-loop for ss in ssp--active
@@ -323,13 +354,14 @@
   (ssp-mode--ensure ss (buffer-file-name))
   (let ((arg (or arg (oref ss step))))
     (if-let ((next-file (ssp-mode--navigate ss arg)))
-        (find-alternate-file next-file)
+        (let ((image-transform-resize nil)) ; Don't resize on open
+          (find-alternate-file next-file))
       (pop-to-buffer (oref ss buffer)))))
 
 (defun ssp-image-mode-next (&optional arg)
   "Move ARG images forward in the slideshow."
   (interactive "p")
-  (ssp-slideshow-pause ssp-image-mode--slideshow)
+  ;; (ssp-slideshow-pause ssp-image-mode--slideshow)
   (ssp--move ssp-image-mode--slideshow arg))
 
 (defun ssp-image-mode-previous (&optional arg)
@@ -338,14 +370,15 @@
   (ssp-slideshow-pause ssp-image-mode--slideshow)
   (ssp--move ssp-image-mode--slideshow (* -1 arg)))
 
-(defun ssp-image-mode-categorize-and-next ()
-  (interactive)
-  (ssp-mode--mark last-command-event t)
-  (ssp-image-mode-next))
+(defun ssp-image-mode-categorize-and-next (char)
+  (interactive (list (read-char-exclusive "Category char: " t)))
+  (when char
+    (ssp-mode--mark ssp-image-mode--slideshow (buffer-file-name) char t)
+    (ssp-image-mode-next)))
 
 (defun ssp-image-mode-mark-and-next ()
   (interactive)
-  (ssp-mode--mark ssp-image-mode--slideshow (buffer-file-name) ?m t)
+  (ssp-mode--mark ssp-image-mode--slideshow (buffer-file-name) ?* t)
   (ssp-image-mode-next))
 
 (defun ssp-image-mode-unmark-and-next ()
