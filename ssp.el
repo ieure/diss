@@ -281,6 +281,9 @@
     (define-key km "x" 'ssp-image-mode-fit-to-width)
     (define-key km "y" 'ssp-image-mode-fit-to-height)
     (define-key km "f" 'ssp-image-mode-smart-fit)
+    (define-key km "r" 'ssp-image-mode-rotate-cw)
+    (define-key km "R" 'ssp-image-mode-rotate-ccw)
+
     (define-key km "0" 'image-transform-reset)
 
     (define-key km "c" 'ssp-image-mode-categorize-and-next)
@@ -291,21 +294,42 @@
   (cl-destructuring-bind (left top right bottom) (window-edges nil t nil t)
     (cons (- right left) (- bottom top))))
 
+(defun ssp-image-mode--rotation (direction)
+  (thread-first
+      (signum direction)
+    (* 90)
+    (+ image-transform-rotation )
+    (truncate)
+    (% 360)
+    (float)))
+
+(defun ssp-image-mode--rotate (direction)
+  (setq-local image-transform-rotation (ssp-image-mode--rotation direction))
+  (image-toggle-display-image))
+
+(defun ssp-image-mode-rotate-cw ()
+  (interactive)
+  (ssp-image-mode--rotate 1))
+
+(defun ssp-image-mode-rotate-ccw ()
+  (interactive)
+  (ssp-image-mode--rotate -1))
+
 (defun ssp-image-mode-fit-to-height ()
   "Fit the current image to the height of the current window.
 This command has no effect unless Emacs is compiled with
 ImageMagick support."
   (interactive)
-  (let ((image-transform-resize 'fit-height))
-    (image-toggle-display-image)))
+  (setq-local image-transform-resize 'fit-height)
+  (image-toggle-display-image))
 
 (defun ssp-image-mode-fit-to-width ()
   "Fit the current image to the width of the current window.
 This command has no effect unless Emacs is compiled with
 ImageMagick support."
   (interactive)
-  (let ((image-transform-resize 'fit-width))
-    (image-toggle-display-image)))
+  (setq-local image-transform-resize 'fit-width)
+  (image-toggle-display-image))
 
 (defun ssp-image-mode-smart-fit ()
   "Fit the image to the window it's displayed in."
