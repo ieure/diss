@@ -65,6 +65,8 @@
   "List of active slideshows.  Each element is a cons cell
   of (IMAGE . SSP-BUFFER).")
 
+(defconst ssp--prefix-name-regexp "\\b\\([a-z0-9-]+\\)_[0-9a-f]\\{16\\}_[a-zA-Z0-9]+\\.")
+
 (defvar ssp--timer nil)
 (make-variable-buffer-local 'ssp--timer)
 
@@ -91,8 +93,8 @@
   (let ((km (make-composed-keymap '(dired-mode-map))))
     (define-key km "x" 'ssp-do-flagged-delete)
     (define-key km "\C-c\C-r" 'ssp-resume)
+    (define-key km (kbd "RET") 'ssp-move-here)
     km))
-
 
 (define-derived-mode ssp-mode dired-mode "SSP"
   "Major mode for dired slideshows."
@@ -122,7 +124,7 @@
   (with-current-buffer (oref ss buffer)
 
     (when (or force                     ; Replace mark
-              (save-excursion
+              (save-mark-and-excursion
                 (beginning-of-line)
                 (equal ?\040 (following-char)))) ; File is unmarked
 
@@ -152,18 +154,22 @@
       (error "Found no file in SSP buffer?!"))))
 
 (defun ssp-start ()
+  "Start a slideshow from a Dired buffer."
   (interactive)
   (ssp-start* :step 1))
 
-(defun ssp-start-looping ()
-  (interactive)
-  (ssp-start* :step 1 :delay .35 :paused nil :loop t))
-
 (defun ssp-start-automatic ()
+  "Start an automatically advancing slideshow from a Dired buffer."
   (interactive)
   (ssp-start* :step 1 :delay .35 :paused nil))
 
+(defun ssp-start-looping ()
+  "Start an automatically advancing looping slideshow from a Dired buffer."
+  (interactive)
+  (ssp-start* :step 1 :delay .35 :paused nil :loop t))
+
 (defun ssp-start-deleting ()
+  "Start an automatically advancing slideshow that deletes files from a Dired buffer."
   (interactive)
   (ssp-start* :step 1 :delay .35 :paused nil :mark ?D))
 
@@ -216,6 +222,25 @@
         ;; Return file
         file))))
 
+(defun ssp-mode--prefix-names ()
+  "Return existing/possible prefix names."
+  (save-excursion
+    (save-match-data
+      (goto-char (point-min))
+      (let ((prefixes))
+        (while (re-search-forward ssp--prefix-name-regexp (point-max) t)
+          (let ((pn (substring-no-properties (match-string 1))))
+            (unless (member pn prefixes)
+              (push pn prefixes))))
+        prefixes))))
+
+(defun ssp-mode--prefix-name (file)
+  (save-match-data
+    (let ((s (file-name-nondirectory file)))
+      (or (when (string-match ssp--prefix-name-regexp s)
+            (match-string 1 s))
+          ""))))
+
 (defun ssp-do-flagged-delete ()
   (interactive)
   (let ((delete-by-moving-to-trash (if current-prefix-arg (not delete-by-moving-to-trash)
@@ -243,6 +268,8 @@
     (define-key km (kbd "<mouse-1>") 'ssp-image-mode-previous)
     (define-key km "n" 'ssp-image-mode-next)
     (define-key km "q" 'ssp-image-mode-quit)
+
+    (define-key km "e" 'ssp-image-mode-set-prefix-name-and-advance)
 
     (define-key km "\\" 'ssp-image-mode-toggle-paused)
     (define-key km (kbd "<mouse-3>") 'ssp-image-mode-toggle-paused)
@@ -291,6 +318,24 @@ ImageMagick support."
       (if (>= img-aspect win-aspect)
           (ssp-image-mode-fit-to-width)
         (ssp-image-mode-fit-to-height)))))
+
+(defun ssp-image-mode-set-prefix-name-and-advance (prefix-name &optional categorize)
+  (interactive
+   (list
+    (completing-read
+     "Name: "
+     (with-current-buffer (oref ssp-image-mode--slideshow buffer)
+       (ssp-mode--prefix-names))
+     nil
+     nil
+     (ssp-mode--prefix-name (buffer-file-name)))
+    current-prefix-arg))
+
+  (let ((bfn (buffer-file-name)))
+    (when categorize
+      (call-interactively 'ssp-image-mode-categorize))
+    (ssp-image-mode-next)
+    (dired-rename-file bfn (concat prefix-name "_" (file-name-nondirectory bfn)) nil)))
 
 (defun ssp-image-mode--automatic-scroll (delay)
   (interactive)
@@ -370,6 +415,11 @@ ImageMagick support."
   (ssp-slideshow-pause ssp-image-mode--slideshow)
   (ssp--move ssp-image-mode--slideshow (* -1 arg)))
 
+(defun ssp-image-mode-categorize (char)
+  (interactive (list (read-char-exclusive "Category char: " t)))
+  (when char
+    (ssp-mode--mark ssp-image-mode--slideshow (buffer-file-name) char t)))
+
 (defun ssp-image-mode-categorize-and-next (char)
   (interactive (list (read-char-exclusive "Category char: " t)))
   (when char
@@ -395,11 +445,6 @@ ImageMagick support."
   (interactive "p")
   (oset ssp-image-mode--slideshow paused t)
   (bury-buffer))
-
-(defun ssp-image-mode-categorize-and-next ()
-  (interactive)
-  (ssp-mode--mark ssp-image-mode--slideshow (buffer-file-name) last-command-event t)
-  (ssp-image-mode-next))
 
 (defun ssp-image-mode-toggle-paused ()
   (interactive)
