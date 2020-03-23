@@ -1,10 +1,10 @@
-* Slideshow+
+* Dired Image Slideshow
   :PROPERTIES:
   :ID:       c6336377-321e-44fb-967f-c9d757b1ce84
   :END:
 
-  Slideshow+ (or SSP) is a dired-based image slideshow mode, borne out
-  of dissatisfaction with the existing slideshow tools.
+  Diss is a dired-based image slideshow mode, borne out of, er,
+  dissatisfaction with the existing slideshow tools.
 
 
 ** Why not =image-next-file=?
@@ -12,20 +12,23 @@
    :ID:       271af254-6135-493e-97e0-3819e6a8f9f4
    :END:
 
-   This is based on finding the next file in the same directory as the
-   one being viewed, which has numerous disadvantages:
+   When you open any image in Emacs, =image-mode= binds =n= and =p= to
+   =image-next-file= and =image-previous-file=, which allows you to
+   navigate to other images in the same directory.
+
+   This is convenient, since it’s built-in, but has numerous
+   disadvantages:
 
    - Order is based on what =directory-files= thinks, not what the
      dired buffer (which you likely started viewing images from) uses.
    - This also means you can’t change the order.
-   - Only navigates files within the same directory, e.g. you can’t
+   - Only navigates files within the /same/ directory, e.g. you can’t
      use =find-dired= to produce the list of images to view.
-   - /Only/ loops over all images, there’s no way to show start to
-     finish.
-   - Terrible performance for older machines / large directories.
-     Every time you load a new image, it reads every file in the
-     directory and does an O(n) search over them to find the current
-     position.
+   - When you reach the end of images, it silently & unconditionally
+     loops back to the start.  This isn’t configurable.
+   - Performance is bad.  When you navigate, it reads every file in
+     the directory and does an O(n) search over them to find the
+     current position.
    - No way to automatically advance images.
 
 
@@ -41,14 +44,19 @@
      advance images.
 
 
+** Usage
+   :PROPERTIES:
+   :ID:       af5d6a4b-e708-49ff-ab44-ca576c27298d
+   :END:
+
 ** Manual mode
    :PROPERTIES:
    :ID:       94a18a81-8b61-4402-a09e-a3e1f90b19b8
    :END:
 
    This is the easiest to understand.  In a Dired buffer containing a
-   non-zero number of images, press =C-c C-s= (=ssp-start=) to begin.
-   SSP will load the first image; the following bindings are
+   non-zero number of images, press =C-c C-s= (=diss-start=) to begin.
+   Diss will load the first image; the following bindings are
    available:
 
    - =n= / =p=: Move to the next/previous image.  Shadows
@@ -59,8 +67,15 @@
    - =d=: Flag for deletion and advance.
    - =u=: Unmark and advance.
    - =c X=: (where =X= is any alphabetic character) Flag image with
-     =X= character, and advance.
-   - =C-c C-q=: Quit SSP.
+     character =X=, and advance.
+   - =r=: Rotate clockwise.  Shadows =image-rotate=.
+   - =R=: Rotate counterclockwise.
+   - =x=: Resize image to fit window width.
+   - =y=: Resize image to fit window height.
+   - =e=: Add a prefix to the filename.  If the file is =foo.jpg=, and
+     you enter =e bar RET=, the file will be renamed to =bar_foo.jpg=.
+   - =q=: Bury buffer.
+   - =C-c C-q=: Quit Diss.
    - =C-c C-r=: Enter automatic mode (see below).
 
 
