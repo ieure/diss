@@ -50,12 +50,15 @@
            :initarg :buffer
            :documentation "Dired buffer used as the source of images."))
 
-  :allow-nil-initform t)
+  :allow-nil-initform t
+  :documentation "Class representing an in-progress slideshow.")
 
 (cl-defmethod diss-slideshow-active? ((this diss-slideshow))
+  "Returns non-NIL if THIS is an active slideshow."
   (buffer-live-p (oref this buffer)))
 
 (cl-defmethod diss-slideshow-pause ((this diss-slideshow))
+  "Pause slideshow THIS."
   (with-slots (paused step) diss-image-mode--slideshow
     (setf paused t)
     (when diss--timer
@@ -65,17 +68,19 @@
   "List of active slideshows.  Each element is a cons cell
   of (IMAGE . DISS-BUFFER).")
 
-(defconst diss--prefix-name-regexp "\\b\\([a-z0-9-]+\\)_[0-9a-f]\\{16\\}_[a-zA-Z0-9]+\\.")
+(defconst diss--prefix-name-regexp "^\\([a-z0-9-]+\\)_"
+  "Regular expression which matches prefix names.")
 
-(defvar diss--timer nil)
+(defvar diss--timer nil
+  "Timer used to automatically advance images.")
 (make-variable-buffer-local 'diss--timer)
 
 (defvar diss-image-mode--slideshow nil
-  "The slideshow this image buffer is associated with.")
+  "The slideshow object this `DISS-IMAGE-MODE' buffer is associated with.")
 (make-variable-buffer-local 'diss-image-mode--slideshow)
 
 (defvar diss-mode--slideshow nil
-  "The slideshow in this DISS-MODE buffer.")
+  "The slideshow in this `DISS-MODE' buffer.")
 (make-variable-buffer-local 'diss-mode--slideshow)
 
 (defvar diss-mode--image-regexp (image-file-name-regexp)
@@ -83,7 +88,7 @@
 (make-variable-buffer-local 'diss-mode--image-regexp)
 
 (defun diss--cleanup ()
-  "Clean up ended slideshows."
+  "Clean up inactive slideshows."
   (setq diss--active
         (cl-loop for ss in diss--active
                  when (diss-slideshow-active? ss)
@@ -94,18 +99,20 @@
     (define-key km "x" 'diss-do-flagged-delete)
     (define-key km "\C-c\C-r" 'diss-resume)
     (define-key km (kbd "RET") 'diss-move-here)
-    km))
+    km)
+  "Keymap for DISS-MODE.")
 
 (define-derived-mode diss-mode dired-mode "DISS"
-  "Major mode for dired slideshows."
+  "Major mode for Dired Image Slideshows."
   (add-hook 'image-mode-hook 'diss-image-mode--maybe-enable))
 
 (defun diss-mode--dired-expanded-filename ()
+  "Return the expanded filename of the current dired item."
   (if-let ((fn (dired-get-filename t t)))
       (expand-file-name fn) ""))
 
 (defun diss-mode--ensure (ss filename)
-  "Ensure that the dired buffer is pointing at FILENAME."
+  "Ensure that slideshow SS's dired buffer has FILENAME selected."
   (with-current-buffer (oref ss buffer)
     (cl-loop with bfn = (file-name-nondirectory filename)
              with efn = (expand-file-name filename)
@@ -119,10 +126,12 @@
              finally return found)))
 
 (defun diss-mode--mark (ss filename char &optional force)
-  "Mark FILENAME with CHAR."
+  "Mark slideshow FILENAME in slideshow SS with CHAR.
+
+If the file already has a mark, do nothing, unless FORCE is
+non-NIL."
   (diss-mode--ensure ss filename)
   (with-current-buffer (oref ss buffer)
-
     (when (or force                     ; Replace mark
               (save-mark-and-excursion
                 (beginning-of-line)
@@ -132,12 +141,14 @@
         (dired-mark nil nil)))))
 
 (defun diss-mode--unmark (ss filename)
-  "Unmark FILENAME."
+  "Unmark FILENAME in slideshow SS."
   (diss-mode--ensure ss filename)
   (with-current-buffer (oref ss buffer)
     (dired-unmark nil nil)))
 
 (defun diss-start* (&rest args)
+  "Start a slideshow."
+
   (unless (eq major-mode 'dired-mode)
     (error "Must be started from Dired."))
 
@@ -179,13 +190,14 @@
 (define-key dired-mode-map "\C-c\C-d" 'diss-start-deleting)
 
 (defun diss-mode--map-windows-displaying (buffer fn)
+  "Apply FN to every window displaying BUFFER."
   (cl-loop for frame in (frame-list)
            do (cl-loop for window in (window-list frame)
                        when (eq buffer (window-buffer window))
                        do (funcall fn window))))
 
 (defun diss-mode--navigate** (arg)
-  "Move forwards or backwards ARG images."
+  "Move forwards or backwards by ARG images (helper)."
   (save-match-data
     (cl-loop with n = (abs arg)
              with a = (if (< arg 0) -1 1)
@@ -198,7 +210,7 @@
              finally return fn)))
 
 (defun diss-mode--navigate* (arg)
-  "Move forwards or backwards ARG images."
+  "Move forwards or backwards by ARG images (helper)."
   (if-let ((file (diss-mode--navigate** arg)))
       file
     (when (oref diss-mode--slideshow loop)
@@ -206,7 +218,7 @@
       (diss-mode--navigate** arg))))
 
 (defun diss-mode--navigate (ss &optional arg)
-  "Move forwards or backwards ARG images."
+  "Move forwards or backwards by ARG images."
   (let ((arg (or arg (oref ss step))))
     (with-slots (current buffer) ss
       (when-let ((file (with-current-buffer buffer
@@ -235,19 +247,22 @@
         prefixes))))
 
 (defun diss-mode--prefix-name (file)
+  "Return the prefix name of FILE."
   (save-match-data
     (let ((s (file-name-nondirectory file)))
       (or (when (string-match diss--prefix-name-regexp s)
             (match-string 1 s))
           ""))))
 
-(defun diss-do-flagged-delete ()
-  (interactive)
+(defun diss-do-flagged-delete (arg)
+  "Delete files."
+  (interactive "P")
   (let ((delete-by-moving-to-trash (if current-prefix-arg (not delete-by-moving-to-trash)
                                      delete-by-moving-to-trash)))
     (dired-do-flagged-delete)))
 
 (defun diss-resume ()
+  "Resume a paused slideshow."
   (interactive)
   (with-slots (current) diss-mode--slideshow
     (if-let ((buf (get-file-buffer current)))
@@ -255,6 +270,7 @@
       (find-file current))))
 
 (defun diss-move-here ()
+  "Move current position to the selected image."
   (interactive)
   (with-slots (current) diss-mode--slideshow
     (setf current (diss-mode--dired-expanded-filename))
@@ -291,10 +307,15 @@
   "Keymap for DISS-IMAGE-MODE.")
 
 (defun diss-image-mode--window-size ()
+  "Returns (WIDTH . HEIGHT) of the current selected window."
   (cl-destructuring-bind (left top right bottom) (window-edges nil t nil t)
     (cons (- right left) (- bottom top))))
 
 (defun diss-image-mode--rotation (direction)
+  "Return rotation angle, in degrees.
+
+If DIRECTION is positive, rotates clockwise, otherwise rotates
+counterclockwise."
   (thread-first
       (signum direction)
     (* 90)
@@ -304,29 +325,28 @@
     (float)))
 
 (defun diss-image-mode--rotate (direction)
+  "Rotate image (helper)."
   (setq-local image-transform-rotation (diss-image-mode--rotation direction))
   (image-toggle-display-image))
 
 (defun diss-image-mode-rotate-cw ()
+  "Rotate image clockwise."
   (interactive)
   (diss-image-mode--rotate 1))
 
 (defun diss-image-mode-rotate-ccw ()
+  "Rotate image counterclockwise."
   (interactive)
   (diss-image-mode--rotate -1))
 
 (defun diss-image-mode-fit-to-height ()
-  "Fit the current image to the height of the current window.
-This command has no effect unless Emacs is compiled with
-ImageMagick support."
+  "Fit the current image to the height of the current window."
   (interactive)
   (setq-local image-transform-resize 'fit-height)
   (image-toggle-display-image))
 
 (defun diss-image-mode-fit-to-width ()
-  "Fit the current image to the width of the current window.
-This command has no effect unless Emacs is compiled with
-ImageMagick support."
+  "Fit the current image to the width of the current window."
   (interactive)
   (setq-local image-transform-resize 'fit-width)
   (image-toggle-display-image))
@@ -344,6 +364,10 @@ ImageMagick support."
         (diss-image-mode-fit-to-height)))))
 
 (defun diss-image-mode-set-prefix-name-and-advance (prefix-name &optional categorize)
+  "Apply PREFIX-NAME to current file.
+
+When prefix arg CATEGORIZE is non-NIL, also prompt for market
+char."
   (interactive
    (list
     (completing-read
@@ -361,14 +385,8 @@ ImageMagick support."
     (diss-image-mode-next)
     (dired-rename-file bfn (concat prefix-name "_" (file-name-nondirectory bfn)) nil)))
 
-(defun diss-image-mode--automatic-scroll (delay)
-  (interactive)
-  (let ((last))
-    (while (not (equal last (setq last (image-scroll-up 10))))
-      (sit-for delay))))
-
 (defun diss-image-mode--automatic (ss image-buffer)
-  "Automatically advance to the next image."
+  "Automatically advance buf IMAGE-BUFFER to the next image in slideshow SS."
   (with-slots (paused mark) ss
     (when (and (diss-slideshow-active? ss)
                (not paused)
@@ -379,7 +397,7 @@ ImageMagick support."
         (diss--move diss-image-mode--slideshow (oref ss step))))))
 
 (defun diss-image-mode--automatic-move (ss image-buffer)
-  "Automatically advance to the next image."
+  "Automatically advance buf IMAGE-BUFFER to the next image in slideshow SS."
   (with-slots (paused mark) ss
     (when (and (diss-slideshow-active? ss)
                (not paused)
@@ -390,8 +408,8 @@ ImageMagick support."
         (diss--move diss-image-mode--slideshow (oref ss step))))))
 
 (define-minor-mode diss-image-mode
-  "Minor mode for dired-based image slideshow."
-  nil "DISSi"
+  "Minor mode for Dired Image Slideshow."
+  nil "DISS"
   diss-image-mode-map
 
   (when diss-image-mode
