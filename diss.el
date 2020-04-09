@@ -212,7 +212,7 @@ non-NIL."
 (defun diss-mode--navigate* (arg)
   "Move forwards or backwards by ARG images (helper)."
   (if-let ((file (diss-mode--navigate** arg)))
-      file
+      (expand-file-name file)
     (when (oref diss-mode--slideshow loop)
       (goto-char (if (< arg 0) (point-max) (point-min)))
       (diss-mode--navigate** arg))))
@@ -224,7 +224,7 @@ non-NIL."
       (when-let ((file (with-current-buffer buffer
                          (diss-mode--navigate* arg))))
         ;; Update state
-        (setf current (expand-file-name file))
+        (setf current file)
 
         ;; Adjust window point
         (diss-mode--map-windows-displaying
