@@ -68,7 +68,7 @@
   "List of active slideshows.  Each element is a cons cell
   of (IMAGE . DISS-BUFFER).")
 
-(defconst diss--prefix-name-regexp "^\\([a-z0-9-]+\\)_"
+(defconst diss--prefix-name-regexp "^\\([^_]+\\)_"
   "Regular expression which matches prefix names.")
 
 (defvar diss--timer nil
