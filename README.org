@@ -3,45 +3,66 @@
   :ID:       c6336377-321e-44fb-967f-c9d757b1ce84
   :END:
 
-  Diss is a dired-based image slideshow mode, borne out of, er,
-  dissatisfaction with the existing slideshow tools.
+  Diss is a dired-based image slideshow, borne out of, er,
+  dissatisfaction with the existing slideshow tools in Emacs.
 
-
-** Why not =image-next-file=?
+** Features
    :PROPERTIES:
-   :ID:       271af254-6135-493e-97e0-3819e6a8f9f4
+   :ID:       9aa39291-4b5f-44ad-a0aa-6449dcd90b21
    :END:
 
-   When you open any image in Emacs, =image-mode= binds =n= and =p= to
-   =image-next-file= and =image-previous-file=, which allows you to
-   navigate to other images in the same directory.
-
-   This is convenient, since it’s built-in, but has numerous
-   disadvantages:
-
-   - Order is based on what =directory-files= thinks, not what the
-     dired buffer (which you likely started viewing images from) uses.
-   - This also means you can’t change the order.
-   - Only navigates files within the /same/ directory, e.g. you can’t
-     use =find-dired= to produce the list of images to view.
-   - When you reach the end of images, it silently & unconditionally
-     loops back to the start.  This isn’t configurable.
-   - Performance is bad.  When you navigate, it reads every file in
-     the directory and does an O(n) search over them to find the
-     current position.
-   - No way to automatically advance images.
+   - Use any Dired buffer (including =find-dired=) as the source of
+     images.
+   - Easily switch between manual navigation and automatic advance.
+   - Infinite looping mode.
+   - Categorize files for later action: mark, flag for deletion, or
+     apply any marker character to sort.
+   - Automatically mark images when automatically advancing.
+   - Quick image tools: Rotate CW/CCW, smart fit, fit height, fit
+     width.
 
 
-** Why not =image-dired-slideshow-start=?
+** Comparison with other Emacs slideshows
    :PROPERTIES:
-   :ID:       21de028f-b6c1-48a8-88cb-aaf3dd40de14
+   :ID:       4bfedd34-44b9-481d-aebb-34dd31febbf3
    :END:
 
-   - Requires you to enter the number of images to display, rather
-     than showing them all, which is weird.
-   - It seems to show thumbnails instead of the complete image.
-   - Maybe I’m doing it wrong, but I couldn’t get it to automatically
-     advance images.
+*** =image-next-file=
+    :PROPERTIES:
+    :ID:       271af254-6135-493e-97e0-3819e6a8f9f4
+    :END:
+
+    When you open any image in Emacs, =image-mode= binds =n= and =p= to
+    =image-next-file= and =image-previous-file=, which allows you to
+    navigate to other images in the same directory.
+
+    This is convenient, since it’s built-in, but has numerous
+    disadvantages and annoyances:
+
+    - The unsorted output of =directory-files= is used to navigate,
+      which means "next" can be surprising vs. what you expect.
+    - Only navigates images within the same directory.
+    - When you reach the end of images, it silently loops back to the
+      start.
+    - Performance is bad, especially with large directories.  Every
+      time you move forward/backward, Emacs has to read every file in
+      the current directory, compare it to a regex matching image
+      filesnames, then perform an O(n) search over that subset to find
+      the current position.
+
+
+*** =image-dired-slideshow-start=
+    :PROPERTIES:
+    :ID:       21de028f-b6c1-48a8-88cb-aaf3dd40de14
+    :END:
+
+    This is also built-in.
+
+    - Requires you to enter the number of images to display, rather
+      than showing them all, which is weird.
+    - It seems to show thumbnails instead of the complete image.
+    - Maybe I’m doing it wrong, but I couldn’t get it to automatically
+      advance images.
 
 
 ** Usage
@@ -49,74 +70,77 @@
    :ID:       af5d6a4b-e708-49ff-ab44-ca576c27298d
    :END:
 
-** Manual mode
-   :PROPERTIES:
-   :ID:       94a18a81-8b61-4402-a09e-a3e1f90b19b8
-   :END:
+   Diss has two pieces:
 
-   This is the easiest to understand.  In a Dired buffer containing a
-   non-zero number of images, press =C-c C-s= (=diss-start=) to begin.
-   Diss will load the first image; the following bindings are
-   available:
+   - =diss-mode=, a major mode enabled on an indirect Dired buffer,
+     which controls the overall slideshow.
 
-   - =n= / =p=: Move to the next/previous image.  Shadows
-     =image-next-file= / =image-previous-file=, but uses the Dired
-     buffer for the files and order.
-   - =m=: Mark the current image in the Dired buffer, and advance to
-     the next.
-   - =d=: Flag for deletion and advance.
-   - =u=: Unmark and advance.
-   - =c X=: (where =X= is any alphabetic character) Flag image with
-     character =X=, and advance.
-   - =r=: Rotate clockwise.  Shadows =image-rotate=.
-   - =R=: Rotate counterclockwise.
-   - =x=: Resize image to fit window width.
-   - =y=: Resize image to fit window height.
-   - =e=: Add a prefix to the filename.  If the file is =foo.jpg=, and
-     you enter =e bar RET=, the file will be renamed to =bar_foo.jpg=.
-   - =q=: Bury buffer.
-   - =C-c C-q=: Quit Diss.
-   - =C-c C-r=: Enter automatic mode (see below).
+   - =diss-image-mode=, a minor mode enabled for the buffer containing
+     the current image in the slideshow.
 
 
-** Automatic mode
-   :PROPERTIES:
-   :ID:       9391e580-ff4c-431b-b75f-0b26a6c7ee86
-   :END:
+*** Manual mode
+    :PROPERTIES:
+    :ID:       94a18a81-8b61-4402-a09e-a3e1f90b19b8
+    :END:
 
-   In automatic mode, images are shown in sequence with a delay in
-   between.  You can start automatic mode from a Dired buffer with
-   =C-c C-a=.
+    This is the easiest to understand.  In a Dired buffer containing a
+    non-zero number of images, press =C-c C-s= (=diss-start=) to
+    begin.  Diss will create an indirect =diss-mode= buffer and load
+    the first image; the following bindings are available:
 
-   Given a prefix argument between 0-9, delays that many seconds
-   between images.
-
-   Given a prefix argument greater than 9, delays that many
-   milliseconds between images.
-
-   The same bindings are available, but:
-
-   - =n= / =p= will cancel automatic mode, dropping into manual mode.
-   - =C-c C-r=: Resumes automatic mode.
-   - Mark/unmark/flag commands don’t advance images, because they’ll
-     advance in a moment on their own.
-
-
-** Deleting mode
-   :PROPERTIES:
-   :ID:       a0935b12-db01-4bc2-9818-6f80a11f387d
-   :END:
-
-   Deleting mode is a special case of automatic mode, where images are
-   flagged for deletion as they’re viewed, unless they have some other
-   mark already (or you explicitly mark/unmark).
+    - =n= / =p=: Move to the next/previous image.  Shadows
+      =image-next-file= / =image-previous-file=, but uses the Dired
+      buffer for the files and order.
+    - =m=: Mark the current image in the Dired buffer, and advance to
+      the next.ppp
+    - =d=: Flag for deletion and advance.
+    - =u=: Unmark and advance.
+    - =c=: Categorize image.  Prompts for Dired mark character,
+      applies it, and advances.
+    - =r=: Rotate clockwise.  Shadows =image-rotate=.
+    - =R=: Rotate counterclockwise.
+    - =x=: Resize image to fit window width.
+    - =y=: Resize image to fit window height.
+    - =f=: Smart fit, resize to the maximum size possible that still
+      fits in the current window.
+    - =e=: Add a pr*e*fix to the filename.  If the file is =foo.jpg=,
+      and you enter =e bar RET=, the file will be renamed to
+      =bar_foo.jpg=.
+    - =q=: Bury buffer.  Pauses slideshow if was automatically
+      advancing.
 
 
-** Looping mode
-   :PROPERTIES:
-   :ID:       daae2113-15fd-4925-8892-add8ff002f93
-   :END:
+*** Automatic mode
+    :PROPERTIES:
+    :ID:       9391e580-ff4c-431b-b75f-0b26a6c7ee86
+    :END:
 
-   In a Dired buffer, =C-c C-l= starts looping mode.  When the last
-   (or first) image is reached, playback continues from the first
-   (last).
+    In automatic mode, images are shown in sequence with a delay in
+    between.  You can start automatic mode from a Dired buffer with
+    =C-c C-a=.
+
+    The same bindings as manual mode are available, but:
+
+    - =\=: Toggle paused/unpaused.
+    - =n= / =p= work as normal, but also pause.
+
+
+*** Deleting mode
+    :PROPERTIES:
+    :ID:       a0935b12-db01-4bc2-9818-6f80a11f387d
+    :END:
+
+    Deleting mode is a special case of automatic mode, where images are
+    flagged for deletion as they’re viewed, unless they have some other
+    mark already (or you explicitly mark/unmark).
+
+
+*** Looping mode
+    :PROPERTIES:
+    :ID:       daae2113-15fd-4925-8892-add8ff002f93
+    :END:
+
+    In a Dired buffer, =C-c C-l= starts looping mode.  When the last
+    (or first) image is reached, playback continues from the first
+    (last).
