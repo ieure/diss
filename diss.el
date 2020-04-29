@@ -25,6 +25,7 @@
 ;;; Code:
 
 (require 'dired)
+(require 'dired-aux)
 
 (defgroup diss nil "Dired Image Slideshow")
 
