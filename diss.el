@@ -67,9 +67,9 @@ Alist of Dired marker character to directory.  When `DISS-SORT' is called, image
   "Returns non-NIL if THIS is an active slideshow."
   (buffer-live-p (oref this buffer)))
 
-(cl-defmethod diss-slideshow-pause ((this diss-slideshow))
+(cl-defmethod diss-slideshow-pause! ((this diss-slideshow))
   "Pause slideshow THIS."
-  (with-slots (paused step) diss-image-mode--slideshow
+  (with-slots (paused) diss-image-mode--slideshow
     (setf paused t)
     (when diss--timer
       (cancel-timer diss--timer))))
@@ -497,13 +497,12 @@ With prefix arg, prompt for marker char, and mark file."
 (defun diss-image-mode-next (&optional arg)
   "Move ARG images forward in the slideshow."
   (interactive "p")
-  ;; (diss-slideshow-pause diss-image-mode--slideshow)
   (diss--move diss-image-mode--slideshow arg))
 
 (defun diss-image-mode-previous (&optional arg)
   "Move ARG images back in the slideshow."
   (interactive "p")
-  (diss-slideshow-pause diss-image-mode--slideshow)
+  (diss-slideshow-pause! diss-image-mode--slideshow)
   (diss--move diss-image-mode--slideshow (* -1 arg)))
 
 (defun diss-image-mode-categorize (char)
