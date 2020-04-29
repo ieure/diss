@@ -447,10 +447,14 @@ With prefix arg, prompt for marker char, and mark file."
     (when (and (diss-slideshow-active? ss)
                (not paused)
                (not (minibufferp)))
-      (with-current-buffer image-buffer
-        (when mark
-          (diss-mode--mark ss (buffer-file-name) mark))
-        (diss--move diss-image-mode--slideshow (oref ss step))))))
+      (if-let ((window (display-buffer-reuse-window image-buffer nil)))
+          (with-current-buffer image-buffer
+            (when mark
+              (diss-mode--mark ss (buffer-file-name) mark))
+            (with-selected-window window
+              (diss--move diss-image-mode--slideshow (oref ss step))))
+        ;; If no window is displaying the buffer anymore, pause.
+        (setf paused t)))))
 
 (define-minor-mode diss-image-mode
   "Minor mode for Dired Image Slideshow."
