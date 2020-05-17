@@ -148,7 +148,8 @@ non-NIL."
                 (beginning-of-line)
                 (equal ?\040 (following-char)))) ; File is unmarked
 
-      (let ((dired-marker-char char))
+      (let ((dired-marker-char char)
+            (mark-active nil))          ; Never mark a region
         (dired-mark nil nil)))))
 
 (defun diss-mode--unmark (ss filename)
