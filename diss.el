@@ -78,7 +78,7 @@ Alist of Dired marker character to directory.  When `DISS-SORT' is called, image
   "List of active slideshows.  Each element is a cons cell
   of (IMAGE . DISS-BUFFER).")
 
-(defconst diss--prefix-name-regexp "^\\([^_]+\\)_"
+(defconst diss--prefix-name-regexp "^\\([^_]+\\)_\\(.*\\)"
   "Regular expression which matches prefix names.")
 
 (defvar diss--timer nil
@@ -261,11 +261,15 @@ non-NIL."
 
 (defun diss-mode--prefix-name (file)
   "Return the prefix name of FILE."
+  (car (diss-mode--prefix-and-name file)))
+
+(defun diss-mode--prefix-and-name (file)
+  "Return the prefix and filename of FILE."
   (save-match-data
     (let ((s (file-name-nondirectory file)))
       (or (when (string-match diss--prefix-name-regexp s)
-            (match-string 1 s))
-          ""))))
+            (cons (match-string 1 s) (match-string 2 s)))
+          (cons "" s)))))
 
 (defun diss-do-flagged-delete (arg)
   "Delete files."
@@ -436,11 +440,11 @@ With prefix arg, prompt for marker char, and mark file."
     (when current-prefix-arg (read-char-exclusive "Category char: " t))))
 
   (let* ((bfn (buffer-file-name))
-         (new-name (concat prefix-name "_" (file-name-nondirectory bfn))))
-    (diss-image-mode-next)
+         (new-name (concat prefix-name "_" (cdr (diss-mode--prefix-and-name bfn)))))
     (with-current-buffer (oref diss-image-mode--slideshow buffer)
       (dired-rename-file bfn new-name nil)
-      (dired-add-entry new-name (or marker (dired-file-marker bfn)) t))))
+      (dired-add-entry new-name (or marker (dired-file-marker bfn)) t))
+    (diss-image-mode-next)))
 
 (defun diss-image-mode--automatic (ss image-buffer)
   "Automatically advance buf IMAGE-BUFFER to the next image in slideshow SS."
