@@ -270,6 +270,17 @@ non-NIL."
 (defun diss-do-flagged-delete (arg)
   "Delete files."
   (interactive "P")
+
+  ;; Handle cases where the current file is flagged for deletion.
+  (save-excursion
+    (goto-char (point-max))
+    (condition-case nil
+        (progn
+          (dired-prev-marked-file 1)
+          (dired-next-line 1)
+          (oset diss-mode--slideshow current (diss-mode--dired-expanded-filename)))
+      (error (diss-mode--navigate diss-mode--slideshow))))
+
   (let ((delete-by-moving-to-trash (if current-prefix-arg (not delete-by-moving-to-trash)
                                      delete-by-moving-to-trash)))
     (dired-do-flagged-delete)))
