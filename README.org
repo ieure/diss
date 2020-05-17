@@ -1,10 +1,10 @@
-* Dired Image Slideshow
+* Diss: Dired Image Slideshow
   :PROPERTIES:
   :ID:       c6336377-321e-44fb-967f-c9d757b1ce84
   :END:
 
-  Diss is a dired-based image slideshow, borne out of, er,
-  dissatisfaction with the existing slideshow tools in Emacs.
+  Diss is an image slideshow for Emacs, borne out of dissatisfaction
+  with the existing tools.
 
 ** Features
    :PROPERTIES:
@@ -13,56 +13,13 @@
 
    - Use any Dired buffer (including =find-dired=) as the source of
      images.
-   - Easily switch between manual navigation and automatic advance.
-   - Infinite looping mode.
-   - Categorize files for later action: mark, flag for deletion, or
-     apply any marker character to sort.
-   - Automatically mark images when automatically advancing.
+   - Manual navigation or automatic advance with delay.
+   - Infinite loop mode.
+   - Categorize files: mark, flag for deletion, or apply any marker
+     character.
+   - Automatic advance can also auto-categorize.
    - Quick image tools: Rotate CW/CCW, smart fit, fit height, fit
-     width.
-
-
-** Comparison with other Emacs slideshows
-   :PROPERTIES:
-   :ID:       4bfedd34-44b9-481d-aebb-34dd31febbf3
-   :END:
-
-*** =image-next-file=
-    :PROPERTIES:
-    :ID:       271af254-6135-493e-97e0-3819e6a8f9f4
-    :END:
-
-    When you open any image in Emacs, =image-mode= binds =n= and =p= to
-    =image-next-file= and =image-previous-file=, which allows you to
-    navigate to other images in the same directory.
-
-    This is convenient, since it’s built-in, but has numerous
-    disadvantages and annoyances:
-
-    - The unsorted output of =directory-files= is used to navigate,
-      which means "next" can be surprising vs. what you expect.
-    - Only navigates images within the same directory.
-    - When you reach the end of images, it silently loops back to the
-      start.
-    - Performance is bad, especially with large directories.  Every
-      time you move forward/backward, Emacs has to read every file in
-      the current directory, compare it to a regex matching image
-      filesnames, then perform an O(n) search over that subset to find
-      the current position.
-
-
-*** =image-dired-slideshow-start=
-    :PROPERTIES:
-    :ID:       21de028f-b6c1-48a8-88cb-aaf3dd40de14
-    :END:
-
-    This is also built-in.
-
-    - Requires you to enter the number of images to display, rather
-      than showing them all, which is weird.
-    - It seems to show thumbnails instead of the complete image.
-    - Maybe I’m doing it wrong, but I couldn’t get it to automatically
-      advance images.
+     width, rename.
 
 
 ** Usage
@@ -72,11 +29,10 @@
 
    Diss has two pieces:
 
-   - =diss-mode=, a major mode enabled on an indirect Dired buffer,
-     which controls the overall slideshow.
+   - =diss-mode=, which controls the overall slideshow.
 
-   - =diss-image-mode=, a minor mode enabled for the buffer containing
-     the current image in the slideshow.
+   - =diss-image-mode=, a minor mode enabled for the current image in
+     the slideshow.
 
 
 *** Manual mode
@@ -144,3 +100,46 @@
     In a Dired buffer, =C-c C-l= starts looping mode.  When the last
     (or first) image is reached, playback continues from the first
     (last).
+
+
+** Comparison with other Emacs slideshow tools
+   :PROPERTIES:
+   :ID:       4bfedd34-44b9-481d-aebb-34dd31febbf3
+   :END:
+
+*** =image-next-file=
+    :PROPERTIES:
+    :ID:       271af254-6135-493e-97e0-3819e6a8f9f4
+    :END:
+
+    When you open any image in Emacs, =image-mode= binds =n= and =p= to
+    =image-next-file= and =image-previous-file=, which allows you to
+    navigate to other images in the same directory.
+
+    This is convenient, since it’s built-in, but has numerous
+    disadvantages and annoyances:
+
+    - The unsorted output of =directory-files= is used to navigate,
+      which means what image it considers "next" can be surprising.
+    - Only navigates images within the same directory.
+    - When you reach the end of images, it silently loops back to the
+      start.
+    - Poor performance, especially with large directories.  Every time
+      you move forward/backward, Emacs has to read every file in the
+      current directory, compare it to a regex matching image
+      filenames, then perform an O(n) search over that subset to find
+      the current position.
+
+
+*** =image-dired-slideshow-start=
+    :PROPERTIES:
+    :ID:       21de028f-b6c1-48a8-88cb-aaf3dd40de14
+    :END:
+
+    This is also built-in.
+
+    - Requires you to enter the number of images to display, rather
+      than showing them all, which is weird.
+    - It seems to show thumbnails instead of the complete image.
+    - Maybe I’m doing it wrong, but I couldn’t get it to automatically
+      advance images.
