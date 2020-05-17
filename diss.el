@@ -344,7 +344,7 @@ non-NIL."
 
     (define-key km "e" 'diss-image-mode-set-prefix-name-and-advance)
 
-    (define-key km "\\" 'diss-image-mode-toggle-paused)
+    (define-key km (kbd "SPC") 'diss-image-mode-toggle-paused)
     (define-key km (kbd "<mouse-3>") 'diss-image-mode-toggle-paused)
 
     (define-key km "u" 'diss-image-mode-unmark-and-next)
