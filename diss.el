@@ -81,6 +81,9 @@ Alist of Dired marker character to directory.  When `DISS-SORT' is called, image
 (defconst diss--prefix-name-regexp "^\\([^_]+\\)_\\(.*\\)"
   "Regular expression which matches prefix names.")
 
+(defvar diss--prefix-name-cache nil
+  "Cache of recent prefix names.")
+
 (defvar diss--timer nil
   "Timer used to automatically advance images.")
 (make-variable-buffer-local 'diss--timer)
@@ -166,6 +169,8 @@ non-NIL."
 
   (diss--cleanup)
 
+  (setq diss--prefix-name-cache (cl-remove-duplicates (append diss--prefix-name-cache (diss--all-prefix-names))))
+
   (let ((dsal dired-subdir-alist))
     (switch-to-buffer (clone-indirect-buffer (format "*diss %s*" dired-directory) nil))
     (diss-mode)
@@ -195,6 +200,14 @@ non-NIL."
   "Start an automatically advancing slideshow that deletes files from a Dired buffer."
   (interactive)
   (diss-start* :step 1 :delay .35 :paused nil :mark ?D))
+
+(defun diss--all-prefix-names ()
+  "Return a list of all prefix names Diss knows about."
+  (cl-remove-duplicates
+   (cl-loop for dir in (mapcar 'cdr diss-sort-destinations)
+            append (mapcar 'diss-mode--prefix-name (directory-files dir nil diss--prefix-name-regexp)))
+   :test 'string=))
+
 
 (define-key dired-mode-map "\C-c\C-s" 'diss-start)
 (define-key dired-mode-map "\C-c\C-a" 'diss-start-automatic)
@@ -433,12 +446,13 @@ With prefix arg, prompt for marker char, and mark file."
     (completing-read
      "Name: "
      (with-current-buffer (oref diss-image-mode--slideshow buffer)
-       (diss-mode--prefix-names))
+       diss--prefix-name-cache)
      nil
      nil
      (diss-mode--prefix-name (buffer-file-name)))
     (when current-prefix-arg (read-char-exclusive "Category char: " t))))
 
+  (add-to-list 'diss--prefix-name-cache prefix-name)
   (let* ((bfn (buffer-file-name))
          (new-name (concat prefix-name "_" (cdr (diss-mode--prefix-and-name bfn)))))
     (with-current-buffer (oref diss-image-mode--slideshow buffer)
