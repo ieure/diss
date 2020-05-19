@@ -334,6 +334,9 @@ non-NIL."
     (cons dests-files num-files)))
 
 (defun diss-sort ()
+  "Sort images marked images.
+
+Renames according to `diss-sort-destinations'."
   (interactive)
   (diss--move-to-first-unmarked)
   (cl-destructuring-bind (dests-files . num-files) (diss--sort*)
