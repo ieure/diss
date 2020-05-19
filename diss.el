@@ -284,11 +284,8 @@ non-NIL."
             (cons (match-string 1 s) (match-string 2 s)))
           (cons "" s)))))
 
-(defun diss-do-flagged-delete (arg)
-  "Delete files."
-  (interactive "P")
-
-  ;; Handle cases where the current file is flagged for deletion.
+(defun diss--move-to-first-unmarked ()
+  "Move to the first file without a marker."
   (save-excursion
     (goto-char (point-max))
     (condition-case nil
@@ -296,8 +293,12 @@ non-NIL."
           (dired-prev-marked-file 1)
           (dired-next-line 1)
           (oset diss-mode--slideshow current (diss-mode--dired-expanded-filename)))
-      (error (diss-mode--navigate diss-mode--slideshow))))
+      (error (diss-mode--navigate diss-mode--slideshow)))))
 
+(defun diss-do-flagged-delete (arg)
+  "Delete files."
+  (interactive "P")
+  (diss--move-to-first-unmarked)
   (let ((delete-by-moving-to-trash (if current-prefix-arg (not delete-by-moving-to-trash)
                                      delete-by-moving-to-trash)))
     (dired-do-flagged-delete)))
@@ -334,6 +335,7 @@ non-NIL."
 
 (defun diss-sort ()
   (interactive)
+  (diss--move-to-first-unmarked)
   (cl-destructuring-bind (dests-files . num-files) (diss--sort*)
     (when (and (> num-files 0)
                (y-or-n-p (format "Sort %d file%s? " num-files (if (> num-files 1) "s" ""))))
