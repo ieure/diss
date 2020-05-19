@@ -359,6 +359,8 @@ non-NIL."
     (define-key km "p" 'diss-image-mode-previous)
     (define-key km (kbd "<mouse-1>") 'diss-image-mode-previous)
     (define-key km "n" 'diss-image-mode-next)
+    (define-key km "P" 'diss-image-mode-previous-other-window)
+    (define-key km "N" 'diss-image-mode-next-other-window)
     (define-key km "q" 'diss-image-mode-quit)
 
     (define-key km "e" 'diss-image-mode-set-prefix-name-and-advance)
@@ -519,7 +521,7 @@ With prefix arg, prompt for marker char, and mark file."
       (setq diss-image-mode--slideshow slideshow)
       (diss-image-mode 1))))
 
-(defun diss--move (ss &optional arg)
+(defun diss--move (ss &optional arg find-function)
   (diss-mode--ensure ss (buffer-file-name))
   (let ((arg (or arg (oref ss step)))
         (image-transform-resize nil))   ; Don't resize on open
@@ -527,12 +529,13 @@ With prefix arg, prompt for marker char, and mark file."
         (progn
           (when-let ((buf (find-buffer-visiting next-file)))
             (kill-buffer buf))
-          (find-alternate-file next-file))
+          (funcall (or find-function #'find-alternate-file) next-file))
       (pop-to-buffer (oref ss buffer)))))
 
 (defun diss-image-mode-next (&optional arg)
   "Move ARG images forward in the slideshow."
   (interactive "p")
+  (diss-slideshow-pause! diss-image-mode--slideshow)
   (diss--move diss-image-mode--slideshow arg))
 
 (defun diss-image-mode-previous (&optional arg)
@@ -540,6 +543,18 @@ With prefix arg, prompt for marker char, and mark file."
   (interactive "p")
   (diss-slideshow-pause! diss-image-mode--slideshow)
   (diss--move diss-image-mode--slideshow (* -1 arg)))
+
+(defun diss-image-mode-next-other-window (&optional arg)
+  "Move ARG images forward in the slideshow, displaying in another window."
+  (interactive "p")
+  (diss-slideshow-pause! diss-image-mode--slideshow)
+  (diss--move diss-image-mode--slideshow arg #'find-file-other-window))
+
+(defun diss-image-mode-previous-other-window (&optional arg)
+  "Move ARG images back in the slideshow, displaying in another window."
+  (interactive "p")
+  (diss-slideshow-pause! diss-image-mode--slideshow)
+  (diss--move diss-image-mode--slideshow (* -1 arg) #'find-file-other-window))
 
 (defun diss-image-mode-categorize (char)
   "Mark the current image with CHAR."
