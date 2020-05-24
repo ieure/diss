@@ -36,6 +36,14 @@ Alist of Dired marker character to directory.  When `DISS-SORT' is called, image
   :group 'diss
   :type '(alist :key-type character :value-type directory))
 
+(defvar diss-saved-configurations
+  '(("standard" :step 1 :paused t :loop nil)
+    ("autolooping" :step 1 :paused nil :delay 0.35 :loop t)
+    ("deleting" :step 1 :paused nil :delay 0.35 :mark 68 :loop nil)))
+
+(defvar diss--last-config "standard"
+  "Last used Diss configuration.")
+
 (defclass diss-slideshow nil
   ((step :initform 1
          :initarg :step
@@ -162,7 +170,7 @@ non-NIL."
     (dired-unmark nil nil)))
 
 (defun diss-start* (&rest args)
-  "Start a slideshow."
+  "Start a slideshow (internal helper)."
 
   (unless (eq major-mode 'dired-mode)
     (error "Must be started from Dired."))
@@ -185,25 +193,28 @@ non-NIL."
         (find-file file)
       (error "Found no file in DISS buffer?!"))))
 
-(defun diss-start (&optional arg)
+(defun diss-configure ()
+  "Read slideshow parameters."
+  (interactive)
+  (let ((step 1)
+        (paused t)
+        (delay .35)
+        (mark nil)
+        (loop nil))
+    (setf step (read-number "Step by: " step))
+    (unless (setf paused (not (y-or-n-p "Advance automatically?")))
+      (setf delay (read-number "Delay between images: " delay))
+      (setf mark (read-char "Mark with: ")))
+    (setf loop (y-or-n-p "Loop?"))
+    (list :step step :paused paused :delay delay :mark mark :loop loop)))
+
+(defun diss-start (config-name)
   "Start a slideshow from a Dired buffer."
-  (interactive "p")
-  (diss-start* :step (or arg 1)))
-
-(defun diss-start-automatic ()
-  "Start an automatically advancing slideshow from a Dired buffer."
-  (interactive)
-  (diss-start* :step 1 :delay .35 :paused nil))
-
-(defun diss-start-looping ()
-  "Start an automatically advancing looping slideshow from a Dired buffer."
-  (interactive)
-  (diss-start* :step 1 :delay .35 :paused nil :loop t))
-
-(defun diss-start-deleting ()
-  "Start an automatically advancing slideshow that deletes files from a Dired buffer."
-  (interactive)
-  (diss-start* :step 1 :delay .35 :paused nil :mark ?D))
+  (interactive (list (completing-read "Configuration: " (mapcar #'car diss-saved-configurations) nil nil diss--last-config)))
+  (setq diss--last-config config-name)
+  (apply #'diss-start*
+         (or (cdr (assoc config-name diss-saved-configurations))
+             (cdr (push (cons config-name (diss-configure)) diss-saved-configurations)))))
 
 (defun diss--all-prefix-names ()
   "Return a list of all prefix names Diss knows about."
@@ -212,11 +223,7 @@ non-NIL."
             append (mapcar 'diss-mode--prefix-name (directory-files dir nil diss--prefix-name-regexp)))
    :test 'string=))
 
-
 (define-key dired-mode-map "\C-c\C-s" 'diss-start)
-(define-key dired-mode-map "\C-c\C-a" 'diss-start-automatic)
-(define-key dired-mode-map "\C-c\C-l" 'diss-start-looping)
-(define-key dired-mode-map "\C-c\C-d" 'diss-start-deleting)
 
 (defun diss-mode--map-windows-displaying (buffer fn)
   "Apply FN to every window displaying BUFFER."
