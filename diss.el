@@ -1,8 +1,11 @@
 ;;; diss.el --- Dired Image Slideshow                 -*- lexical-binding: t; -*-
 
-;; Copyright (C) 2020  Ian Eure
+;; Copyright (C) 2020 Ian Eure
 
-;; Author: Ian Eure <ian@retrospec.tv>
+;; Author: Ian Eure
+;; Version: 1.0.0
+;; Package-Requires: ((emacs "26.1"))
+;; URL: https://github.com/ieure/diss
 ;; Keywords: multimedia
 
 ;; This program is free software; you can redistribute it and/or modify
