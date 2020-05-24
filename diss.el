@@ -377,7 +377,7 @@ Renames according to `diss-sort-destinations'."
     (define-key km "N" 'diss-image-mode-next-other-window)
     (define-key km "q" 'diss-image-mode-quit)
 
-    (define-key km "e" 'diss-image-mode-set-prefix-name-and-advance)
+    (define-key km "e" 'diss-image-mode-set-prefix-name-and-next)
 
     (define-key km (kbd "SPC") 'diss-image-mode-toggle-paused)
     (define-key km (kbd "<mouse-3>") 'diss-image-mode-toggle-paused)
@@ -455,8 +455,8 @@ counterclockwise."
           (diss-image-mode-fit-to-width)
         (diss-image-mode-fit-to-height)))))
 
-(defun diss-image-mode-set-prefix-name-and-advance (prefix-name &optional marker)
-  "Apply PREFIX-NAME to current file.
+(defun diss-image-mode-set-prefix-name-and-next (prefix-name &optional marker)
+  "Apply PREFIX-NAME to current file, then advance.
 
 With prefix arg, prompt for marker char, and mark file."
   (interactive
