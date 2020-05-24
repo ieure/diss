@@ -389,6 +389,7 @@ Renames according to `diss-sort-destinations'."
     (define-key km "x" 'diss-image-mode-fit-to-width)
     (define-key km "y" 'diss-image-mode-fit-to-height)
     (define-key km "f" 'diss-image-mode-smart-fit)
+
     (define-key km "r" 'diss-image-mode-rotate-cw)
     (define-key km "R" 'diss-image-mode-rotate-ccw)
 
