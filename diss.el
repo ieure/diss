@@ -169,7 +169,11 @@ non-NIL."
 
   (diss--cleanup)
 
-  (setq diss--prefix-name-cache (cl-remove-duplicates (append diss--prefix-name-cache (diss--all-prefix-names))))
+  (unless diss--prefix-name-cache
+    (thread-first (diss--all-prefix-names)
+      (append diss--prefix-name-cache)
+      (cl-remove-duplicates)
+      (setq diss--prefix-name-cache)))
 
   (let ((dsal dired-subdir-alist))
     (switch-to-buffer (clone-indirect-buffer (format "*diss %s*" dired-directory) nil))
