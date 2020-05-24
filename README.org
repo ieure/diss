@@ -3,8 +3,8 @@
   :ID:       c6336377-321e-44fb-967f-c9d757b1ce84
   :END:
 
-  Diss is an image slideshow for Emacs, borne out of dissatisfaction
-  with the existing tools.
+  Diss is an image slideshow for Emacs, based on Dired and
+  =image-mode=.
 
 ** Features
    :PROPERTIES:
@@ -14,92 +14,60 @@
    - Use any Dired buffer (including =find-dired=) as the source of
      images.
    - Manual navigation or automatic advance with delay.
-   - Infinite loop mode.
    - Categorize files: mark, flag for deletion, or apply any marker
      character.
    - Automatic advance can also auto-categorize.
+   - Infinite loop, or pop back to Diss buffer when finished.
    - Quick image tools: Rotate CW/CCW, smart fit, fit height, fit
      width, rename.
 
 
 ** Usage
    :PROPERTIES:
-   :ID:       af5d6a4b-e708-49ff-ab44-ca576c27298d
+   :ID:       94a18a81-8b61-4402-a09e-a3e1f90b19b8
    :END:
 
-   Diss has two pieces:
+   From a Dired buffer, =C-c C-s= will start Diss, prompting for the
+   saved configuration to use.  Saved configurations associate a name
+   to a set of slideshow parameters, i.e. how many images to advance
+   by, whether to loop, whether to automatically advance, etc.  The
+   default is ="standard"=, which advances by one image only when the
+   user requests it.
 
-   - =diss-mode=, which controls the overall slideshow.
+   Entering the name of a configuration which isn’t already known
+   prompts for all Diss parameters and saves it.
 
-   - =diss-image-mode=, a minor mode enabled for the current image in
-     the slideshow.
+   Once Diss has been started, it creates an indirect =*diss ...*=
+   buffer and loads the first image.  This also scales the image to
+   take up as much of the window as possible, without cropping or
+   scrolling.
 
+   These keybindings are available:
 
-*** Manual mode
-    :PROPERTIES:
-    :ID:       94a18a81-8b61-4402-a09e-a3e1f90b19b8
-    :END:
-
-    This is the easiest to understand.  In a Dired buffer containing a
-    non-zero number of images, press =C-c C-s= (=diss-start=) to
-    begin.  Diss will create an indirect =diss-mode= buffer and load
-    the first image; the following bindings are available:
-
-    - =n= / =p=: Move to the next/previous image.  Shadows
-      =image-next-file= / =image-previous-file=, but uses the Dired
-      buffer for the files and order.
-    - =m=: Mark the current image in the Dired buffer, and advance to
-      the next.ppp
-    - =d=: Flag for deletion and advance.
-    - =u=: Unmark and advance.
-    - =c=: Categorize image.  Prompts for Dired mark character,
-      applies it, and advances.
-    - =r=: Rotate clockwise.  Shadows =image-rotate=.
-    - =R=: Rotate counterclockwise.
-    - =x=: Resize image to fit window width.
-    - =y=: Resize image to fit window height.
-    - =f=: Smart fit, resize to the maximum size possible that still
-      fits in the current window.
-    - =e=: Add a pr*e*fix to the filename.  If the file is =foo.jpg=,
-      and you enter =e bar RET=, the file will be renamed to
-      =bar_foo.jpg=.
-    - =q=: Bury buffer.  Pauses slideshow if was automatically
-      advancing.
-
-
-*** Automatic mode
-    :PROPERTIES:
-    :ID:       9391e580-ff4c-431b-b75f-0b26a6c7ee86
-    :END:
-
-    In automatic mode, images are shown in sequence with a delay in
-    between.  You can start automatic mode from a Dired buffer with
-    =C-c C-a=.
-
-    The same bindings as manual mode are available, but:
-
-    - =\=: Toggle paused/unpaused.
-    - =n= / =p= work as normal, but also pause.
-
-
-*** Deleting mode
-    :PROPERTIES:
-    :ID:       a0935b12-db01-4bc2-9818-6f80a11f387d
-    :END:
-
-    Deleting mode is a special case of automatic mode, where images are
-    flagged for deletion as they’re viewed, unless they have some other
-    mark already (or you explicitly mark/unmark).
-
-
-*** Looping mode
-    :PROPERTIES:
-    :ID:       daae2113-15fd-4925-8892-add8ff002f93
-    :END:
-
-    In a Dired buffer, =C-c C-l= starts looping mode.  When the last
-    (or first) image is reached, playback continues from the first
-    (last).
+   - =n= / =p=: Move to the next/previous image.  Shadows
+     =image-next-file= / =image-previous-file=, but uses the Dired
+     buffer for the files and order.
+   - =N= / =P=: Move to the next/previous image in a new window,
+     instead of replacing the visible one.
+   - =m=: Mark the current image in the Dired buffer, and advance to
+     the next.
+   - =d=: Flag for deletion and advance.
+   - =u=: Unmark and advance.
+   - =c=: Categorize image.  Prompts for Dired mark character, applies
+     it, and advances.
+   - =e=: Add a pr*e*fix to the filename, and advances.  If the file
+     is =foo.jpg=, and you enter =e bar RET=, the file will be renamed
+     to =bar_foo.jpg=.  With a prefix argument, categorizes as well.
+   - =r=: Rotate clockwise.  Shadows =image-rotate=.
+   - =R=: Rotate counterclockwise.
+   - =x=: Resize image to fit window width.
+   - =y=: Resize image to fit window height.
+   - =f=: Smart fit, resize to the maximum size possible that still
+     fits in the current window.
+   - =0=: Reset all size/rotation transforms.
+   - =SPC=: Pause/unpause slideshow, if it’s auto-advancing.
+   - =q=: Bury buffer.  Pauses slideshow if was automatically
+     advancing.
 
 
 ** Comparison with other Emacs slideshow tools
@@ -120,15 +88,15 @@
     disadvantages and annoyances:
 
     - The unsorted output of =directory-files= is used to navigate,
-      which means what image it considers "next" can be surprising.
+      which means its idea of "next" can be surprising.
     - Only navigates images within the same directory.
     - When you reach the end of images, it silently loops back to the
       start.
     - Poor performance, especially with large directories.  Every time
-      you move forward/backward, Emacs has to read every file in the
-      current directory, compare it to a regex matching image
-      filenames, then perform an O(n) search over that subset to find
-      the current position.
+      you move forward/backward, Emacs reads every file in the current
+      directory, compares it to a regex matching image filenames, then
+      performs an O(n) search over that subset to find the current
+      position.
 
 
 *** =image-dired-slideshow-start=
@@ -143,3 +111,13 @@
     - It seems to show thumbnails instead of the complete image.
     - Maybe I’m doing it wrong, but I couldn’t get it to automatically
       advance images.
+
+
+** Limitations
+   :PROPERTIES:
+   :ID:       b1e38bbb-f3f5-448f-91ed-044565d63131
+   :END:
+
+   - If you attempt to load a very large image (approximately >
+     5000x5000, or 25 megapixels), Emacs will instantly crash.
+   -
