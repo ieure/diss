@@ -23,7 +23,8 @@
 
 ;;; Commentary:
 
-;;
+;; Diss is a dired-based image slideshow.  Press C-c C-s in a Dired
+;; buffer to start it.  See README.org for more.
 
 ;;; Code:
 
