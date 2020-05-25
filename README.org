@@ -22,6 +22,15 @@
      width, rename.
 
 
+** Standard GitHub Disclaimer
+   :PROPERTIES:
+   :ID:       eb214507-bab1-4eb6-a3a3-b7a558c96d26
+   :END:
+
+   This is a read-only mirror to ease discoverability, and no primary
+   development work happens on GitHub.
+
+
 ** Usage
    :PROPERTIES:
    :ID:       94a18a81-8b61-4402-a09e-a3e1f90b19b8
