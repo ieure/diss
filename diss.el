@@ -30,7 +30,9 @@
 (require 'dired)
 (require 'dired-aux)
 
-(defgroup diss nil "Dired Image Slideshow")
+(defgroup diss nil
+  "Dired Image Slideshow"
+  :group 'multimedia)
 
 (defcustom diss-sort-destinations nil
   "Diss image sorting destinations.
@@ -86,8 +88,9 @@ Alist of Dired marker character to directory.  When `DISS-SORT' is called, image
       (cancel-timer diss--timer))))
 
 (defvar diss--active nil
-  "List of active slideshows.  Each element is a cons cell
-  of (IMAGE . DISS-BUFFER).")
+  "The list of all currently active slideshows.
+
+Each element is a cons cell of (IMAGE . DISS-BUFFER).")
 
 (defconst diss--prefix-name-regexp "^\\([^_]+\\)_\\(.*\\)"
   "Regular expression which matches prefix names.")
@@ -173,10 +176,12 @@ non-NIL."
     (dired-unmark nil nil)))
 
 (defun diss-start* (&rest args)
-  "Start a slideshow (internal helper)."
+  "Start a slideshow (internal helper).
+
+Passes ARGS to function `diss-slideshow'."
 
   (unless (eq major-mode 'dired-mode)
-    (error "Must be started from Dired."))
+    (error "Must be started from Dired"))
 
   (diss--cleanup)
 
@@ -205,14 +210,14 @@ non-NIL."
         (mark nil)
         (loop nil))
     (setf step (read-number "Step by: " step))
-    (unless (setf paused (not (y-or-n-p "Advance automatically?")))
+    (unless (setf paused (not (y-or-n-p "Advance automatically? ")))
       (setf delay (read-number "Delay between images: " delay))
       (setf mark (read-char "Mark with: ")))
-    (setf loop (y-or-n-p "Loop?"))
+    (setf loop (y-or-n-p "Loop? "))
     (list :step step :paused paused :delay delay :mark mark :loop loop)))
 
 (defun diss-start (config-name)
-  "Start a slideshow from a Dired buffer."
+  "Start a slideshow from a Dired buffer, using params from CONFIG-NAME."
   (interactive (list (completing-read "Configuration: " (mapcar #'car diss-saved-configurations) nil nil diss--last-config)))
   (setq diss--last-config config-name)
   (apply #'diss-start*
@@ -257,7 +262,7 @@ non-NIL."
       (diss-mode--navigate** arg))))
 
 (defun diss-mode--navigate (ss &optional arg)
-  "Move forwards or backwards by ARG images."
+  "Move forwards or backwards by ARG images in slideshow SS."
   (let ((arg (or arg (oref ss step))))
     (with-slots (current buffer) ss
       (when-let ((file (with-current-buffer buffer
@@ -272,19 +277,6 @@ non-NIL."
 
         ;; Return file
         file))))
-
-(defun diss-mode--prefix-names ()
-  (save-excursion
-    (save-match-data
-      (let ((prefixes)
-            (re (format "%s.*%s" diss--prefix-name-regexp diss-mode--image-regexp)))
-        (dired-map-dired-file-lines
-         (lambda (file)
-           (let ((file (file-name-nondirectory file)))
-             (when (string-match re file)
-               (let ((pn (substring-no-properties (match-string 1 file))))
-                 (add-to-list 'prefixes pn))))))
-        prefixes))))
 
 (defun diss-mode--prefix-name (file)
   "Return the prefix name of FILE."
@@ -310,7 +302,9 @@ non-NIL."
       (error (diss-mode--navigate diss-mode--slideshow)))))
 
 (defun diss-do-flagged-delete (arg)
-  "Delete files."
+  "Delete files.
+
+With prefix ARG, inverts the value of var `delete-by-moving-to-trash'."
   (interactive "P")
   (diss--move-to-first-unmarked)
   (let ((delete-by-moving-to-trash (if current-prefix-arg (not delete-by-moving-to-trash)
@@ -333,6 +327,13 @@ non-NIL."
     (diss-resume)))
 
 (defun diss--sort* ()
+  "Return file sorting information.
+
+Returns a cons cell of (DESTS-FILES . NUM-FILES).
+
+DESTS-FILES is a list of lists.  The car of each list is the
+destination directory, and the cdr is the files to be moved
+there."
   (let ((dests-files)
         (num-files 0))
     (dired-map-dired-file-lines
@@ -348,7 +349,7 @@ non-NIL."
     (cons dests-files num-files)))
 
 (defun diss-sort ()
-  "Sort images marked images.
+  "Sort marked images.
 
 Renames according to `diss-sort-destinations'."
   (interactive)
@@ -403,7 +404,7 @@ Renames according to `diss-sort-destinations'."
   "Keymap for DISS-IMAGE-MODE.")
 
 (defun diss-image-mode--window-size ()
-  "Returns (WIDTH . HEIGHT) of the current selected window."
+  "Return (WIDTH . HEIGHT) of the current selected window."
   (cl-destructuring-bind (left top right bottom) (window-edges nil t nil t)
     (cons (- right left) (- bottom top))))
 
@@ -421,7 +422,7 @@ counterclockwise."
     (float)))
 
 (defun diss-image-mode--rotate (direction)
-  "Rotate image (helper)."
+  "Rotate image in DIRECTION."
   (setq-local image-transform-rotation (diss-image-mode--rotation direction))
   (image-toggle-display-image))
 
@@ -462,7 +463,8 @@ counterclockwise."
 (defun diss-image-mode-set-prefix-name-and-next (prefix-name &optional marker)
   "Apply PREFIX-NAME to current file, then advance.
 
-With prefix arg, prompt for marker char, and mark file."
+With a prefix arg, prompt for marker char MARKER, and mark file
+with it."
   (interactive
    (list
     (completing-read
@@ -540,14 +542,20 @@ With prefix arg, prompt for marker char, and mark file."
       (diss-image-mode 1))))
 
 (defun diss--move (ss &optional arg find-function)
+  "Find the ARG-th file in slideshow SS with FIND-FUNCTION.
+
+If ARG is omitted, use the slideshow's step.
+If the end of the slideshow is reached, display the Diss buffer."
   (diss-mode--ensure ss (buffer-file-name))
   (let ((arg (or arg (oref ss step)))
         (image-transform-resize nil))   ; Don't resize on open
     (if-let ((next-file (diss-mode--navigate ss arg)))
         (progn
+          ;; If a buffer is showing the file already, kill it.
           (when-let ((buf (find-buffer-visiting next-file)))
             (kill-buffer buf))
           (funcall (or find-function #'find-alternate-file) next-file))
+      ;; Slideshow is over, show the Diss buffer
       (pop-to-buffer (oref ss buffer)))))
 
 (defun diss-image-mode-next (&optional arg)
@@ -594,7 +602,7 @@ With prefix arg, prompt for marker char, and mark file."
   (diss-image-mode-next))
 
 (defun diss-image-mode-unmark-and-next ()
-  "Remove marks from the current image and advance."
+  "Remove mark from the current image and advance."
   (interactive)
   (diss-mode--unmark diss-image-mode--slideshow (buffer-file-name))
   (diss-image-mode-next))
@@ -605,9 +613,9 @@ With prefix arg, prompt for marker char, and mark file."
   (diss-mode--mark diss-image-mode--slideshow (buffer-file-name) ?D t)
   (diss-image-mode-next))
 
-(defun diss-image-mode-quit (&optional arg)
-  "Pause the slideshot and bury the current buffer."
-  (interactive "p")
+(defun diss-image-mode-quit ()
+  "Pause the slideshow and bury the current buffer."
+  (interactive)
   (oset diss-image-mode--slideshow paused t)
   (bury-buffer))
 
