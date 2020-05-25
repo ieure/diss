@@ -348,6 +348,17 @@ there."
            (incf num-files)))))
     (cons dests-files num-files)))
 
+(cl-defun diss--rename-to ((dest &rest files))
+  "Rename FILES, moving them to DEST."
+  (unless (and (file-exists-p dest)
+               (eq t (file-attribute-type (file-attributes dest))))
+    (make-directory dest t))
+
+  (cl-loop
+   for file in files
+   do (dired-rename-file file
+                         (concat dest "/" (file-name-nondirectory file)) nil)))
+
 (defun diss-sort ()
   "Sort marked images.
 
@@ -357,18 +368,7 @@ Renames according to `diss-sort-destinations'."
   (cl-destructuring-bind (dests-files . num-files) (diss--sort*)
     (when (and (> num-files 0)
                (y-or-n-p (format "Sort %d file%s? " num-files (if (> num-files 1) "s" ""))))
-      (thread-first
-          (lambda (dest-files)
-            (cl-destructuring-bind (dest &rest files) dest-files
-              (unless (and (file-exists-p dest) (eq t (file-attribute-type (file-attributes dest))))
-                (make-directory dest t))
-
-              (mapc
-               (lambda (file)
-                 (dired-rename-file file (concat dest "/" (file-name-nondirectory file)) nil))
-               files)))
-
-        (mapc dests-files)))))
+      (mapc #'diss--rename-to dests-files))))
 
  ;; Minor mode for images in the slideshow.
 
