@@ -45,7 +45,11 @@ Alist of Dired marker character to directory.  When `DISS-SORT' is called, image
 (defvar diss-saved-configurations
   '(("standard" :step 1 :paused t :loop nil)
     ("autolooping" :step 1 :paused nil :delay 0.35 :loop t)
-    ("deleting" :step 1 :paused nil :delay 0.35 :mark 68 :loop nil)))
+    ("deleting" :step 1 :paused nil :delay 0.35 :mark 68 :loop nil))
+  "List of saved configurations.
+
+The car of each configuration is its name.  The cdr is the list
+of arguments passed to constructor function `diss-slideshow'.")
 
 (defvar diss--last-config "standard"
   "Last used Diss configuration.")
@@ -87,6 +91,13 @@ Alist of Dired marker character to directory.  When `DISS-SORT' is called, image
     (setf paused t)
     (when diss--timer
       (cancel-timer diss--timer))))
+
+(cl-defmethod diss-slideshow-toggle-pause! ((this diss-slideshow))
+  "Pause or resume slideshow THIS."
+  (with-slots (paused) this
+    (when (and (setf paused (not paused)) diss--timer)
+      (cancel-timer diss--timer))
+    paused))
 
 (defvar diss--active nil
   "The list of all currently active slideshows.
@@ -509,7 +520,7 @@ with it."
             (with-selected-window window
               (diss--move diss-image-mode--slideshow (oref ss step))))
         ;; If no window is displaying the buffer anymore, pause.
-        (setf paused t)))))
+        (diss-slideshow-pause! ss)))))
 
 (define-minor-mode diss-image-mode
   "Minor mode for Dired Image Slideshow."
@@ -617,16 +628,14 @@ If the end of the slideshow is reached, display the Diss buffer."
 (defun diss-image-mode-quit ()
   "Pause the slideshow and bury the current buffer."
   (interactive)
-  (oset diss-image-mode--slideshow paused t)
+  (diss-slideshow-pause! diss-image-mode--slideshow)
   (bury-buffer))
 
 (defun diss-image-mode-toggle-paused ()
   "Toggle whether the current slideshow is paused."
   (interactive)
-  (with-slots (paused step) diss-image-mode--slideshow
-    (if (setf paused (not paused))
-        (cancel-timer diss--timer)
-      (diss-image-mode--automatic diss-image-mode--slideshow (current-buffer)))))
+  (unless (diss-slideshow-toggle-pause! diss-image-mode--slideshow)
+    (diss-image-mode--automatic diss-image-mode--slideshow (current-buffer))))
 
 (provide 'diss)
 ;;; diss.el ends here
