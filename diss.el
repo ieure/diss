@@ -198,10 +198,8 @@ Passes ARGS to function `diss-slideshow'."
   (diss--cleanup)
 
   (unless diss--prefix-name-cache
-    (thread-first (diss--all-prefix-names)
-      (append diss--prefix-name-cache)
-      (cl-remove-duplicates)
-      (setq diss--prefix-name-cache)))
+    (setq diss--prefix-name-cache
+          (cl-remove-duplicates (append diss--prefix-name-cache (diss--all-prefix-names)))))
 
   (let ((dsal dired-subdir-alist))
     (switch-to-buffer (clone-indirect-buffer (format "*diss %s*" dired-directory) nil))
