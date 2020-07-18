@@ -206,10 +206,13 @@ Passes ARGS to function `diss-slideshow'."
     (diss-mode)
     (setq-local dired-subdir-alist dsal)
     (goto-char (point-min))
-    (add-to-list 'diss--active (setq diss-mode--slideshow (apply 'diss-slideshow :buffer (current-buffer) args)))
-    (if-let ((file (diss-mode--navigate diss-mode--slideshow)))
-        (find-file file)
-      (error "Found no file in DISS buffer?!"))))
+    (add-to-list 'diss--active (setq diss-mode--slideshow (apply 'diss-slideshow :buffer (current-buffer) args)))))
+
+(defun diss--begin ()
+  "Begin the slideshow."
+  (if-let ((file (diss-mode--navigate diss-mode--slideshow)))
+      (find-file file)
+    (error "Found no file in DISS buffer?!")))
 
 (defun diss-configure ()
   "Read slideshow parameters."
@@ -232,7 +235,8 @@ Passes ARGS to function `diss-slideshow'."
   (setq diss--last-config config-name)
   (apply #'diss-start*
          (or (cdr (assoc config-name diss-saved-configurations))
-             (cdr (push (cons config-name (diss-configure)) diss-saved-configurations)))))
+             (cdr (push (cons config-name (diss-configure)) diss-saved-configurations))))
+  (diss--begin))
 
 (defun diss--all-prefix-names ()
   "Return a list of all prefix names Diss knows about."
