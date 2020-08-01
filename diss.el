@@ -210,9 +210,7 @@ Passes ARGS to function `diss-slideshow'."
 
 (defun diss--begin ()
   "Begin the slideshow."
-  (if-let ((file (diss-mode--navigate diss-mode--slideshow)))
-      (find-file file)
-    (error "Found no file in DISS buffer?!")))
+  (diss--move diss-mode--slideshow 0 #'find-file))
 
 (defun diss-configure ()
   "Read slideshow parameters."
@@ -328,10 +326,7 @@ With prefix ARG, inverts the value of var `delete-by-moving-to-trash'."
 (defun diss-resume ()
   "Resume a paused slideshow."
   (interactive)
-  (with-slots (current) diss-mode--slideshow
-    (if-let ((buf (get-file-buffer current)))
-        (switch-to-buffer buf)
-      (find-file current))))
+  (diss--move diss-mode--slideshow 0 #'find-file))
 
 (defun diss-move-here ()
   "Move current position to the selected image."
@@ -560,7 +555,7 @@ with it."
 
 If ARG is omitted, use the slideshow's step.
 If the end of the slideshow is reached, display the Diss buffer."
-  (diss-mode--ensure ss (buffer-file-name))
+  (diss-mode--ensure ss (or (buffer-file-name) (oref ss current)))
   (let ((arg (or arg (oref ss step)))
         (image-transform-resize nil))   ; Don't resize on open
     (if-let ((next-file (diss-mode--navigate ss arg)))
