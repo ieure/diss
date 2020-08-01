@@ -210,7 +210,7 @@ Passes ARGS to function `diss-slideshow'."
 
 (defun diss--begin ()
   "Begin the slideshow."
-  (diss--move diss-mode--slideshow 0 #'find-file))
+  (diss--move diss-mode--slideshow nil #'find-file))
 
 (defun diss-configure ()
   "Read slideshow parameters."
@@ -431,10 +431,20 @@ counterclockwise."
     (% 360)
     (float)))
 
+(defmacro diss--without-scaling (&rest body)
+  "Evaluate BODY with IMAGE-SCALING-FACTOR set to 1.0."
+  `(let ((image-scaling-factor 1.0))
+     ,@body))
+
+(defun diss--toggle-display-image ()
+  "Toggle image display, with scaling disabled."
+  (diss--without-scaling
+   (image-toggle-display-image)))
+
 (defun diss-image-mode--rotate (direction)
   "Rotate image in DIRECTION."
   (setq-local image-transform-rotation (diss-image-mode--rotation direction))
-  (image-toggle-display-image))
+  (diss--toggle-display-image))
 
 (defun diss-image-mode-rotate-cw ()
   "Rotate image clockwise."
@@ -450,13 +460,13 @@ counterclockwise."
   "Fit the current image to the height of the current window."
   (interactive)
   (setq-local image-transform-resize 'fit-height)
-  (image-toggle-display-image))
+  (diss--toggle-display-image))
 
 (defun diss-image-mode-fit-to-width ()
   "Fit the current image to the width of the current window."
   (interactive)
   (setq-local image-transform-resize 'fit-width)
-  (image-toggle-display-image))
+  (diss--toggle-display-image))
 
 (defun diss-image-mode-smart-fit ()
   "Fit the image to the window it's displayed in."
@@ -556,7 +566,8 @@ with it."
 
 If ARG is omitted, use the slideshow's step.
 If the end of the slideshow is reached, display the Diss buffer."
-  (diss-mode--ensure ss (or (buffer-file-name) (oref ss current)))
+  (when-let ((current  (or (buffer-file-name) (oref ss current))))
+    (diss-mode--ensure ss current))
   (let ((arg (or arg (oref ss step)))
         (image-transform-resize nil))   ; Don't resize on open
     (if-let ((next-file (diss-mode--navigate ss arg)))
@@ -564,7 +575,8 @@ If the end of the slideshow is reached, display the Diss buffer."
           ;; If a buffer is showing the file already, kill it.
           (when-let ((buf (find-buffer-visiting next-file)))
             (kill-buffer buf))
-          (funcall (or find-function #'find-alternate-file) next-file))
+          (diss--without-scaling
+           (funcall (or find-function #'find-alternate-file) next-file)))
       ;; Slideshow is over, show the Diss buffer
       (pop-to-buffer (oref ss buffer)))))
 
