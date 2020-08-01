@@ -68,13 +68,14 @@
 
 (defun diss-feh--make-list ()
   "Create the list of files for the slideshow.  Returns path to filelist."
-  (make-temp-file "fehdiss" nil nil
-                  (with-output-to-string
-                    (save-match-data
-                      (dired-map-dired-file-lines
-                       (lambda (file)
-                         (when (string-match diss-mode--image-regexp file)
-                           (princ (concat file "\n")))))))))
+  (let ((save-silently t))
+    (make-temp-file "fehdiss" nil nil
+                    (with-output-to-string
+                      (save-match-data
+                        (dired-map-dired-file-lines
+                         (lambda (file)
+                           (when (string-match diss-mode--image-regexp file)
+                             (princ (concat file "\n"))))))))))
 
 (defun diss-feh-start (config-name)
   "Start a slideshow from a Dired buffer, using params from CONFIG-NAME."
@@ -95,15 +96,16 @@
 (defun diss-feh--args ()
   "Return list of arguments to feh."
   (with-slots (current step delay loop) diss-mode--slideshow
-    `("-."
-      "-Z"
-      "-^" "fehdiss %f"
-      "-B" "#444"
-      ,@(when delay `("-D" ,(number-to-string delay)))
+    `("--scale-down"
+      "--auto-zoom"
+      "--title" "fehdiss %f"
+      "--image-bg" "#444"
+      ,@(when delay `("--slideshow-delay" ,(number-to-string delay)))
       "--on-last-slide" ,(if loop "resume" "hold")
-      "-f" ,(diss-feh--make-list)
+      "--filelist" ,(diss-feh--make-list)
+      "--no-recursive"
       "--start-at" ,current
-      ,@(when (<= step -1) '("-n")))))
+      ,@(when (<= step -1) '("--reverse")))))
 
 (defun diss-feh--spawn ()
   (when (and diss-feh-mode--process
@@ -172,6 +174,10 @@
           diss-feh-mode--capture nil)
     (with-slots (feh-buffer) diss-feh-image-mode--slideshow
       (setq feh-buffer (current-buffer)))
+
+    ;; Enable fixed geometry mode, this seems to be impossible via the
+    ;; commandline.
+    (exwm-input--fake-key ?g)
 
     (diss-feh-image-mode)))
 
