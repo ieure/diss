@@ -54,6 +54,9 @@ of arguments passed to constructor function `diss-slideshow'.")
 (defvar diss--last-config "standard"
   "Last used Diss configuration.")
 
+(defvar diss--slideshow-class 'diss-slideshow
+  "The class to use for the slideshow object.")
+
 (defclass diss-slideshow nil
   ((step :initform 1
          :initarg :step
@@ -144,7 +147,9 @@ Each element is a cons cell of (IMAGE . DISS-BUFFER).")
 
 (define-derived-mode diss-mode dired-mode "DISS"
   "Major mode for Dired Image Slideshows."
-  (add-hook 'image-mode-hook 'diss-image-mode--maybe-enable))
+  (add-hook 'image-mode-hook 'diss-image-mode--maybe-enable)
+  ;; Tell diss-start* what class to use.
+  'diss-slideshow)
 
 (defun diss-mode--dired-expanded-filename ()
   "Return the expanded filename of the current dired item."
@@ -187,7 +192,7 @@ non-NIL."
   (with-current-buffer (oref ss buffer)
     (dired-unmark nil nil)))
 
-(defun diss-start* (mode &rest args)
+(defun diss-start* (ss-mode &rest args)
   "Start a slideshow (internal helper).
 
 Passes ARGS to function `diss-slideshow'."
@@ -203,10 +208,10 @@ Passes ARGS to function `diss-slideshow'."
 
   (let ((dsal dired-subdir-alist))
     (switch-to-buffer (clone-indirect-buffer (format "*diss %s*" dired-directory) nil))
-    (funcall mode)
+    (funcall ss-mode)
     (setq-local dired-subdir-alist dsal)
     (goto-char (point-min))
-    (add-to-list 'diss--active (setq diss-mode--slideshow (apply 'diss-slideshow :buffer (current-buffer) args)))))
+    (add-to-list 'diss--active (setq diss-mode--slideshow (apply diss--slideshow-class :buffer (current-buffer) args)))))
 
 (defun diss--begin ()
   "Begin the slideshow."
