@@ -26,67 +26,34 @@
 
 ;;; Code:
 
-(defvar diss-feh--capture nil
+(defvar diss-feh-mode--capture nil
   "When non-nil, captures the next feh window.")
 
-(defvar diss-feh-mode--slideshow nil
-  "The slideshow object this `DISS-FEH-MODE' buffer is associated with.")
-(make-variable-buffer-local 'diss-feh-mode--slideshow)
+(defvar diss-feh-mode--process nil
+  "The feh process associated with this slideshow.")
+(make-variable-buffer-local 'diss-feh-mode--process)
 
-(defvar diss-feh-mode-map (make-sparse-keymap)
-  "Keymap for DISS-IMAGE-MODE.")
+ ;; diss-feh-mode
 
-(define-key diss-feh-mode-map "q" 'diss-feh-mode-quit)
+(defvar diss-feh-mode-map
+  (let ((km (make-composed-keymap '(dired-mode-map))))
+    (define-key km "\C-c\C-r" 'diss-feh-resume)
+    (define-key km (kbd "RET") 'diss-feh-move-here)
+    km)
+  "Keymap for DISS-FEH-MODE.")
 
-(define-key diss-feh-mode-map "e" 'diss-feh-mode-set-prefix-name-and-next)
-
-(define-key diss-feh-mode-map "u" 'diss-feh-mode-unmark-and-next)
-(define-key diss-feh-mode-map "d" 'diss-feh-mode-delete-and-next)
-(define-key diss-feh-mode-map "m" 'diss-feh-mode-mark-and-next)
-(define-key diss-feh-mode-map "c" 'diss-feh-mode-categorize-and-next)
-
-(define-minor-mode diss-feh-mode
-  "Minor mode for Dired Image Slideshow, feh edition." nil "fehDISS"
-  diss-feh-mode-map
-
-  (when diss-feh-mode
-    (setq-local exwm-update-title-hook
-                (cons 'diss-feh--update-title-hook exwm-update-title-hook))))
-
-(defun diss-feh--exwm-capture ()
-  "Capture feh when it starts up."
-  (when (and diss-feh--capture (string= exwm-class-name "feh"))
-    (setq diss-feh-mode--slideshow diss-feh--capture
-          diss-feh--capture nil)
-    (diss-feh-mode)))
-
-(defun diss-feh--update-title-hook ()
-  (with-slots (mark) diss-feh-mode--slideshow
-    (when mark
-      (diss-mode--mark diss-feh-mode--slideshow (substring exwm-title 8) mark))))
-
-(defun diss-feh-mode--automatic-move ()
-  "Automatically advance buf IMAGE-BUFFER to the next image in slideshow SS."
-  (with-slots (paused mark) ss
-    (when (and (diss-slideshow-active? ss)
-               (not paused)
-               (not (minibufferp)))
-      (if-let ((window (display-buffer-reuse-window image-buffer nil)))
-          (with-current-buffer image-buffer
-            (when mark
-              (diss-mode--mark ss (buffer-file-name) mark))
-            (with-selected-window window
-              (diss--move diss-image-mode--slideshow (oref ss step))))
-        ;; If no window is displaying the buffer anymore, pause.
-        (diss-slideshow-pause! ss)))))
+(define-derived-mode diss-feh-mode diss-mode "DISS/feh"
+  "Major mode for Dired Image Slideshows (feh backend).")
 
 (defun diss-feh--make-list ()
   "Create the list of files for the slideshow.  Returns path to filelist."
   (make-temp-file "fehdiss" nil nil
                   (with-output-to-string
-                    (dired-map-dired-file-lines
-                     (lambda (file)
-                       (princ (concat file "\n")))))))
+                    (save-match-data
+                      (dired-map-dired-file-lines
+                       (lambda (file)
+                         (when (string-match diss-mode--image-regexp file)
+                           (princ (concat file "\n")))))))))
 
 (defun diss-feh-start (config-name)
   "Start a slideshow from a Dired buffer, using params from CONFIG-NAME."
@@ -117,6 +84,19 @@
       "--start-at" ,current
       ,@(when (<= step -1) '("-n")))))
 
+(defun diss-feh--spawn ()
+  (when (and diss-feh-mode--process
+             (processp diss-feh-mode--process)
+             (process-live-p diss-feh-mode--process))
+    (delete-process diss-feh-mode--process))
+
+  (setq diss-feh-mode--capture diss-mode--slideshow)
+  (add-to-list 'exwm-manage-finish-hook 'diss-feh--exwm-capture)
+  (let ((args (diss-feh--args)))
+    (message "%s %s" "feh" (s-join " " args))
+    (setq diss-feh-mode--process
+          (apply #'start-process "feh" nil "feh" args))))
+
 (defun diss-feh--begin ()
   "Start the DISS/feh slideshow."
 
@@ -124,9 +104,76 @@
   (unless (diss-mode--navigate diss-mode--slideshow)
     (error "Found no file in DISS buffer?!"))
 
-  (setq diss-feh--capture diss-mode--slideshow)
-  (add-to-list 'exwm-manage-finish-hook 'diss-feh--exwm-capture)
-  (apply #'start-process "feh" nil "feh" (diss-feh--args)))
+  (diss-feh--spawn))
+
+(defun diss-feh-resume ()
+  "Resume a paused slideshow."
+  (interactive)
+  (diss-feh--spawn))
+
+(defun diss-feh-move-here ()
+  "Move current position to the selected image."
+  (interactive)
+  (with-slots (current) diss-mode--slideshow
+    (setf current (diss-mode--dired-expanded-filename))
+    (diss-feh-resume)))
+
+ ;; diss-feh-image-mode
+
+(defvar diss-feh-image-mode--slideshow nil
+  "The slideshow object this `DISS-FEH-IMAGE-MODE' buffer is associated with.")
+(make-variable-buffer-local 'diss-feh-image-mode--slideshow)
+
+(defvar diss-feh-image-mode-map
+  (let ((km (make-sparse-keymap)))
+    (define-key km "q" 'diss-feh-image-mode-quit)
+    (define-key km "e" 'diss-feh-image-mode-set-prefix-name-and-next)
+    (define-key km "u" 'diss-feh-image-mode-unmark-and-next)
+    (define-key km "d" 'diss-feh-image-mode-delete-and-next)
+    (define-key km "m" 'diss-feh-image-mode-mark-and-next)
+    (define-key km "c" 'diss-feh-image-mode-categorize-and-next)
+    km)
+  "Keymap for DISS-IMAGE-MODE.")
+
+(define-minor-mode diss-feh-image-mode
+  "Minor mode for Dired Image Slideshow, feh edition." nil "fehDISS"
+  diss-feh-image-mode-map
+
+  (when diss-feh-image-mode
+    (add-hook 'exwm-update-title-hook #'diss-feh--update-title-hook nil t)))
+
+(defun diss-feh--exwm-capture ()
+  "Capture feh when it starts up."
+  (when (and diss-feh-mode--capture (string= exwm-class-name "feh"))
+    (setq diss-feh-image-mode--slideshow diss-feh-mode--capture
+          diss-feh-mode--capture nil)
+    (diss-feh-image-mode)))
+
+(defun diss-feh--title->filename ()
+  (let ((raw (substring exwm-title 8)))
+    (if (s-ends-with? " [Paused]" raw)
+        (substring raw 0 -9)
+      raw)))
+
+(defun diss-feh--update-title-hook ()
+  (with-slots (mark) diss-feh-image-mode--slideshow
+    (when mark
+      (diss-mode--mark diss-feh-image-mode--slideshow (diss-feh--title->filename) mark))))
+
+(defun diss-feh-image-mode--automatic-move ()
+  "Automatically advance buf IMAGE-BUFFER to the next image in slideshow SS."
+  (with-slots (paused mark) ss
+    (when (and (diss-slideshow-active? ss)
+               (not paused)
+               (not (minibufferp)))
+      (if-let ((window (display-buffer-reuse-window image-buffer nil)))
+          (with-current-buffer image-buffer
+            (when mark
+              (diss-mode--mark ss (buffer-file-name) mark))
+            (with-selected-window window
+              (diss--move diss-image-mode--slideshow (oref ss step))))
+        ;; If no window is displaying the buffer anymore, pause.
+        (diss-slideshow-pause! ss)))))
 
 (provide 'diss-feh)
 ;;; diss-feh.el ends here
