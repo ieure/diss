@@ -277,18 +277,19 @@ Passes ARGS to function `diss-slideshow'."
   "Move forwards or backwards by ARG images in slideshow SS."
   (let ((arg (or arg (oref ss step))))
     (with-slots (current buffer) ss
-      (when-let ((file (with-current-buffer buffer
-                         (diss-mode--navigate* arg))))
-        ;; Update state
-        (setf current file)
+      (if (zerop arg) current
+        (when-let ((file (with-current-buffer buffer
+                           (diss-mode--navigate* arg))))
+          ;; Update state
+          (setf current file)
 
-        ;; Adjust window point
-        (diss-mode--map-windows-displaying
-         (current-buffer)
-         (lambda (window) (set-window-point window (point))))
+          ;; Adjust window point
+          (diss-mode--map-windows-displaying
+           (current-buffer)
+           (lambda (window) (set-window-point window (point))))
 
-        ;; Return file
-        file))))
+          ;; Return file
+          file)))))
 
 (defun diss-mode--prefix-name (file)
   "Return the prefix name of FILE."
