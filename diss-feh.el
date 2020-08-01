@@ -90,9 +90,15 @@
 
 (defun diss-feh-start (config-name)
   "Start a slideshow from a Dired buffer, using params from CONFIG-NAME."
-  (interactive (list (completing-read "Configuration: " (mapcar #'car diss-saved-configurations) nil nil diss--last-config)))
-  (setq diss--last-config config-name)
-  (apply #'diss-start*
+  (interactive
+   (list
+    (setq diss-last-config
+          (completing-read
+           "Configuration: "
+           (mapcar #'car diss-saved-configurations)
+           nil nil diss--last-config))))
+
+  (apply #'diss-start* #'diss-feh-mode
          (or (cdr (assoc config-name diss-saved-configurations))
              (cdr (push (cons config-name (diss-configure)) diss-saved-configurations))))
 

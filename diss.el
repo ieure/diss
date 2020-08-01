@@ -187,7 +187,7 @@ non-NIL."
   (with-current-buffer (oref ss buffer)
     (dired-unmark nil nil)))
 
-(defun diss-start* (&rest args)
+(defun diss-start* (mode &rest args)
   "Start a slideshow (internal helper).
 
 Passes ARGS to function `diss-slideshow'."
@@ -203,7 +203,7 @@ Passes ARGS to function `diss-slideshow'."
 
   (let ((dsal dired-subdir-alist))
     (switch-to-buffer (clone-indirect-buffer (format "*diss %s*" dired-directory) nil))
-    (diss-mode)
+    (funcall mode)
     (setq-local dired-subdir-alist dsal)
     (goto-char (point-min))
     (add-to-list 'diss--active (setq diss-mode--slideshow (apply 'diss-slideshow :buffer (current-buffer) args)))))
@@ -233,7 +233,7 @@ Passes ARGS to function `diss-slideshow'."
   "Start a slideshow from a Dired buffer, using params from CONFIG-NAME."
   (interactive (list (completing-read "Configuration: " (mapcar #'car diss-saved-configurations) nil nil diss--last-config)))
   (setq diss--last-config config-name)
-  (apply #'diss-start*
+  (apply #'diss-start* #'diss-mode
          (or (cdr (assoc config-name diss-saved-configurations))
              (cdr (push (cons config-name (diss-configure)) diss-saved-configurations))))
   (diss--begin))
