@@ -241,6 +241,30 @@
     (diss-feh-image-mode-categorize char)
     (diss-feh-image-mode-next)))
 
+(defun diss-feh-image-mode-set-prefix-name-and-next (prefix-name &optional marker)
+  "Apply PREFIX-NAME to current file, then advance.
+
+With a prefix arg, prompt for marker char MARKER, and mark file
+with it."
+  (interactive
+   (list
+    (completing-read
+     "Name: "
+     (with-current-buffer (oref diss-feh-image-mode--slideshow buffer)
+       diss--prefix-name-cache)
+     nil
+     nil
+     (diss-mode--prefix-name (diss-feh--title->filename)))
+    (when current-prefix-arg (read-char-exclusive "Category char: " t))))
+
+  (add-to-list 'diss--prefix-name-cache prefix-name)
+  (let* ((bfn (diss-feh--title->filename))
+         (new-name (concat prefix-name "_" (cdr (diss-mode--prefix-and-name bfn)))))
+    (with-current-buffer (oref diss-feh-image-mode--slideshow buffer)
+      (dired-rename-file bfn new-name nil)
+      (dired-add-entry new-name (or marker (dired-file-marker bfn)) t))
+    (diss-feh-image-mode-next)))
+
 (defun diss-feh-image-mode-delete-and-next ()
   "Flag the current image for deletion and advance."
   (interactive)
