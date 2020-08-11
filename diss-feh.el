@@ -191,8 +191,8 @@
   (s-ends-with? "[Paused]" exwm-title))
 
 (defun diss-feh--update-title-hook ()
-  (with-slots (mark paused) diss-feh-image-mode--slideshow
-    (when mark
+  (with-slots (mark paused feh-buffer) diss-feh-image-mode--slideshow
+    (when (and mark (buffer-life-p feh-buffer))
       (diss-mode--mark diss-feh-image-mode--slideshow (diss-feh--title->filename) mark))
     (setf paused (diss-feh--title->paused?))))
 
