@@ -245,7 +245,7 @@ Passes ARGS to function `diss-slideshow'."
   "Return a list of all prefix names Diss knows about."
   (cl-remove-duplicates
    (cl-loop for dir in (mapcar 'cdr diss-sort-destinations)
-            append (mapcar 'diss-mode--prefix-name (directory-files dir nil diss--prefix-name-regexp)))
+            append (mapcar 'diss-mode--prefix-name (ignore-errors (directory-files dir nil diss--prefix-name-regexp))))
    :test 'string=))
 
 (define-key dired-mode-map "\C-c\C-s" 'diss-start)
