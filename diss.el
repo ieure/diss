@@ -42,14 +42,23 @@ Alist of Dired marker character to directory.  When `DISS-SORT' is called, image
   :group 'diss
   :type '(alist :key-type character :value-type directory))
 
-(defvar diss-saved-configurations
-  '(("standard" :step 1 :paused t :loop nil)
-    ("autolooping" :step 1 :paused nil :delay 0.35 :loop t)
-    ("deleting" :step 1 :paused nil :delay 0.35 :mark 68 :loop nil))
+(defcustom diss-saved-configurations
+  '(("standard" ((:step 1) (:paused t) (:loop nil)))
+    ("autolooping" ((:step 1) (:paused nil) (:delay 0.35) (:loop t)))
+    ("deleting" ((:step 1) (:paused nil) (:delay 0.35) (:mark 68) (:loop nil))))
   "List of saved configurations.
 
 The car of each configuration is its name.  The cdr is the list
-of arguments passed to constructor function `diss-slideshow'.")
+of arguments passed to constructor function `diss-slideshow'."
+  :group 'diss
+  :type '(alist :key-type (string :tag "Name")
+                :value-type
+                (set
+                 (group (const :tag "Image step" :value 1 :step) integer)
+                 (group (const :tag "Loop at end" :loop) boolean)
+                 (group (const :tag "Start paused" :value t :paused) boolean)
+                 (group (const :tag "Delay between images" :delay) number)
+                 (group (const :tag "Mark images with" :mark) character))))
 
 (defvar diss--last-config "standard"
   "Last used Diss configuration.")
@@ -230,15 +239,19 @@ Passes ARGS to function `diss-slideshow'."
       (setf delay (read-number "Delay between images: " delay))
       (setf mark (read-char "Mark with: ")))
     (setf loop (y-or-n-p "Loop? "))
-    (list :step step :paused paused :delay delay :mark mark :loop loop)))
+    `(((:step ,step) (:paused ,paused) (:delay ,delay) (:mark ,mark) (:loop ,loop)))))
+
+(defun diss--maybe-configure (config-name)
+  (unless (assoc config-name diss-saved-configurations)
+    (push (cons config-name (diss-configure)) diss-saved-configurations))
+
+  (cl-reduce #'append (cadr (assoc config-name diss-saved-configurations))))
 
 (defun diss-start (config-name)
   "Start a slideshow from a Dired buffer, using params from CONFIG-NAME."
   (interactive (list (completing-read "Configuration: " (mapcar #'car diss-saved-configurations) nil nil diss--last-config)))
   (setq diss--last-config config-name)
-  (apply #'diss-start* #'diss-mode
-         (or (cdr (assoc config-name diss-saved-configurations))
-             (cdr (push (cons config-name (diss-configure)) diss-saved-configurations))))
+  (apply #'diss-start* #'diss-mode (diss--maybe-configure config-name))
   (diss--begin))
 
 (defun diss--all-prefix-names ()
