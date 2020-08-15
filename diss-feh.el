@@ -87,10 +87,8 @@
            (mapcar #'car diss-saved-configurations)
            nil nil diss--last-config))))
 
-  (apply #'diss-start* #'diss-feh-mode
-         (or (cdr (assoc config-name diss-saved-configurations))
-             (cdr (push (cons config-name (diss-configure)) diss-saved-configurations))))
-
+  (setq diss--last-config config-name)
+  (apply #'diss-start* #'diss-feh-mode (diss--maybe-configure config-name))
   (diss-feh--begin))
 
 (defun diss-feh--args ()
