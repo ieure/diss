@@ -239,7 +239,12 @@ Passes ARGS to function `diss-slideshow'."
       (setf delay (read-number "Delay between images: " delay))
       (setf mark (read-char "Mark with: ")))
     (setf loop (y-or-n-p "Loop? "))
-    `(((:step ,step) (:paused ,paused) (:delay ,delay) (:mark ,mark) (:loop ,loop)))))
+
+    `(((:step ,step)
+       (:paused ,paused)
+       (:delay ,delay)
+       (:mark ,mark)
+       (:loop ,loop)))))
 
 (defun diss--maybe-configure (config-name)
   (unless (assoc config-name diss-saved-configurations)
@@ -249,7 +254,10 @@ Passes ARGS to function `diss-slideshow'."
 
 (defun diss-start (config-name)
   "Start a slideshow from a Dired buffer, using params from CONFIG-NAME."
-  (interactive (list (completing-read "Configuration: " (mapcar #'car diss-saved-configurations) nil nil diss--last-config)))
+  (interactive
+   (list (completing-read
+          "Configuration: "
+          (mapcar #'car diss-saved-configurations) nil nil diss--last-config)))
   (setq diss--last-config config-name)
   (apply #'diss-start* #'diss-mode (diss--maybe-configure config-name))
   (diss--begin))
