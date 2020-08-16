@@ -151,6 +151,7 @@ Each element is a cons cell of (IMAGE . DISS-BUFFER).")
     (define-key km "\C-c\C-r" 'diss-resume)
     (define-key km (kbd "RET") 'diss-move-here)
     (define-key km "\C-c\C-c" 'diss-sort)
+    (define-key km "C" 'diss-configure)
     km)
   "Keymap for DISS-MODE.")
 
@@ -226,29 +227,37 @@ Passes ARGS to function `diss-slideshow'."
   "Begin the slideshow."
   (diss--move diss-mode--slideshow nil #'find-file))
 
-(defun diss-configure ()
+(defun diss--slideshow->args (ss)
+  "Return arguments for current configutation of slideshow SS."
+  (cl-loop for slot in '(step paused delay mark loop)
+           append (list (intern (format ":%s" slot))
+                         (slot-value ss slot))))
+
+(cl-defun diss-read-config (&key (step 1) (paused t) (delay .35) mark loop)
   "Read slideshow parameters."
   (interactive)
-  (let ((step 1)
-        (paused t)
-        (delay .35)
-        (mark nil)
-        (loop nil))
-    (setf step (read-number "Step by: " step))
-    (unless (setf paused (not (y-or-n-p "Advance automatically? ")))
-      (setf delay (read-number "Delay between images: " delay))
-      (setf mark (read-char "Mark with: ")))
-    (setf loop (y-or-n-p "Loop? "))
+  (setf step (read-number "Step by: " step))
+  (unless (setf paused (not (y-or-n-p "Advance automatically? ")))
+    (setf delay (read-number "Delay between images: " delay))
+    (setf mark (read-char "Mark with: ")))
+  (setf loop (y-or-n-p "Loop? "))
 
-    `(((:step ,step)
-       (:paused ,paused)
-       (:delay ,delay)
-       (:mark ,mark)
-       (:loop ,loop)))))
+  `(((:step ,step)
+     (:paused ,paused)
+     (:delay ,delay)
+     (:mark ,mark)
+     (:loop ,loop))))
+
+(defun diss-configure ()
+  "Re/configure the current slideshow."
+  (interactive)
+  (cl-loop for (k v) in (car (apply #'diss-read-config (diss--slideshow->args diss-mode--slideshow)))
+           for slot = (intern (substring (symbol-name k) 1))
+           do (setf (slot-value diss-mode--slideshow slot) v)))
 
 (defun diss--maybe-configure (config-name)
   (unless (assoc config-name diss-saved-configurations)
-    (push (cons config-name (diss-configure)) diss-saved-configurations))
+    (push (cons config-name (diss-read-config)) diss-saved-configurations))
 
   (cl-reduce #'append (cadr (assoc config-name diss-saved-configurations))))
 

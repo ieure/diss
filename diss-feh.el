@@ -59,6 +59,7 @@
   (let ((km (make-composed-keymap '(dired-mode-map))))
     (define-key km "\C-c\C-r" 'diss-feh-resume)
     (define-key km (kbd "RET") 'diss-feh-move-here)
+    (define-key km "C" 'diss-configure)
     km)
   "Keymap for DISS-FEH-MODE.")
 
