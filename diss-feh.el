@@ -273,6 +273,7 @@ with it."
 (defun diss-feh-image-mode-quit ()
   "Flag the current image for deletion and advance."
   (interactive)
+  (diss-slideshow-pause! diss-feh-image-mode--slideshow)
   (bury-buffer))
 
 (defun diss-feh-image-mode-toggle-paused ()
