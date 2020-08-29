@@ -94,7 +94,8 @@
 
 (defun diss-feh--args ()
   "Return list of arguments to feh."
-  (with-slots (current step delay loop) diss-mode--slideshow
+  (with-slots (current step delay loop paused) diss-mode--slideshow
+    (let ((delay (if (and delay paused) (* -1 delay) delay)))
     `("--scale-down"
       "--auto-zoom"
       "--title" "fehdiss %f"
@@ -104,7 +105,7 @@
       "--filelist" ,(diss-feh--make-list)
       "--no-recursive"
       "--start-at" ,current
-      ,@(when (<= step -1) '("--reverse")))))
+      ,@(when (<= step -1) '("--reverse"))))))
 
 (defun diss-feh--spawn ()
   (when (and diss-feh-mode--process
