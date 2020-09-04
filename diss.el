@@ -533,10 +533,11 @@ with it."
 
   (add-to-list 'diss--prefix-name-cache prefix-name)
   (let* ((bfn (buffer-file-name))
+         (old-marker (dired-file-marker bfn))
          (new-name (concat prefix-name "_" (cdr (diss-mode--prefix-and-name bfn)))))
     (with-current-buffer (oref diss-image-mode--slideshow buffer)
       (dired-rename-file bfn new-name nil)
-      (dired-add-entry new-name (or marker (dired-file-marker bfn)) t))
+      (dired-add-entry new-name (or marker old-marker) t))
     (diss-image-mode-next)))
 
 (defun diss-image-mode--automatic (ss image-buffer)
