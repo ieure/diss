@@ -1,4 +1,4 @@
-;;; diss-feh.el --- Diss integration with feh        -*- lexical-binding: t; -*-
+;; diss-feh.el --- Diss integration with feh        -*- lexical-binding: t; -*-
 
 ;; Copyright (C) 2020  Ian Eure
 
