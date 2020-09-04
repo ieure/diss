@@ -44,7 +44,7 @@
   (with-slots (feh-buffer) diss-feh-image-mode--slideshow
     (with-current-buffer feh-buffer
       (unless (diss-feh--title->paused?)
-        (diss-slideshow-toggle-pause!)))))
+        (diss-slideshow-toggle-pause! this)))))
 
 (cl-defmethod diss-slideshow-toggle-pause! ((this diss-feh-slideshow))
   "Pause or resume DISS/Feh slideshow THIS."
