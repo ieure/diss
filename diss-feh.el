@@ -104,6 +104,7 @@
       "--on-last-slide" ,(if loop "resume" "hold")
       "--filelist" ,(diss-feh--make-list)
       "--no-recursive"
+      "--draw-filename"
       "--start-at" ,current
       ,@(when (<= step -1) '("--reverse"))))))
 
