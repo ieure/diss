@@ -162,7 +162,7 @@
   "Keymap for DISS-IMAGE-MODE.")
 
 (define-minor-mode diss-feh-image-mode
-  "Minor mode for Dired Image Slideshow, feh edition." nil "fehDISS"
+  "Minor mode for Dired Image Slideshow, feh edition." nil " DISS/feh"
   diss-feh-image-mode-map
 
   (when diss-feh-image-mode
