@@ -150,6 +150,7 @@
   (let ((km (make-sparse-keymap)))
     (define-key km "q" 'diss-feh-image-mode-quit)
     (define-key km "e" 'diss-feh-image-mode-set-prefix-name-and-next)
+    (define-key km "p" 'diss-feh-image-mode-previous-and-pause)
     (define-key km "u" 'diss-feh-image-mode-unmark-and-next)
     (define-key km "d" 'diss-feh-image-mode-delete-and-next)
     (define-key km "m" 'diss-feh-image-mode-mark-and-next)
@@ -211,6 +212,11 @@
         ;; If no window is displaying the buffer anymore, pause.
         (diss-slideshow-pause! ss)))))
 
+(defun diss-feh-image-mode-previous (&optional arg)
+  "Move ARG images backward in the slideshow."
+  (interactive "p")
+  (exwm-input--fake-key ?p))
+
 (defun diss-feh-image-mode-next (&optional arg)
   "Move ARG images forward in the slideshow."
   (interactive "p")
@@ -271,6 +277,12 @@ with it."
   (interactive)
   (diss-feh-image-mode-categorize ?D)
   (diss-feh-image-mode-next))
+
+(defun diss-feh-image-mode-previous-and-pause ()
+  "Go back to the previous image, and pause."
+  (interactive)
+  (diss-slideshow-pause! diss-feh-image-mode--slideshow)
+  (diss-feh-image-mode-previous))
 
 (defun diss-feh-image-mode-quit ()
   "Flag the current image for deletion and advance."
