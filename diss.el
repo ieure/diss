@@ -44,8 +44,8 @@ Alist of Dired marker character to directory.  When `DISS-SORT' is called, image
 
 (defcustom diss-saved-configurations
   '(("standard" ((:step 1) (:paused t) (:loop nil)))
-    ("autolooping" ((:step 1) (:paused nil) (:delay 0.35) (:loop t)))
-    ("deleting" ((:step 1) (:paused nil) (:delay 0.35) (:mark 68) (:loop nil))))
+    ("autolooping" ((:step 1) (:paused nil) (:delay 0.25) (:loop t)))
+    ("deleting" ((:step 1) (:paused nil) (:delay 0.25) (:mark 68) (:loop nil))))
   "List of saved configurations.
 
 The car of each configuration is its name.  The cdr is the list
