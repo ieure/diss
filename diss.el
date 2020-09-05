@@ -602,7 +602,7 @@ with it."
 
 If ARG is omitted, use the slideshow's step.
 If the end of the slideshow is reached, display the Diss buffer."
-  (when-let ((current  (or (buffer-file-name) (oref ss current))))
+  (when-let ((current (or (buffer-file-name) (oref ss current))))
     (diss-mode--ensure ss current))
   (let ((arg (or arg (oref ss step)))
         (image-transform-resize nil))   ; Don't resize on open
