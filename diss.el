@@ -53,12 +53,13 @@ of arguments passed to constructor function `diss-slideshow'."
   :group 'diss
   :type '(alist :key-type (string :tag "Name")
                 :value-type
-                (set
-                 (group (const :tag "Image step" :value 1 :step) integer)
-                 (group (const :tag "Loop at end" :loop) boolean)
-                 (group (const :tag "Start paused" :value t :paused) boolean)
-                 (group (const :tag "Delay between images" :delay) number)
-                 (group (const :tag "Mark images with" :mark) character))))
+                (list
+                 (set
+                  (group (const :tag "Image step" :value 1 :step) integer)
+                  (group (const :tag "Loop at end" :loop) boolean)
+                  (group (const :tag "Start paused" :value t :paused) boolean)
+                  (group (const :tag "Delay between images" :delay) number)
+                  (group (const :tag "Mark images with" :mark) character)))))
 
 (defvar diss--last-config "standard"
   "Last used Diss configuration.")
