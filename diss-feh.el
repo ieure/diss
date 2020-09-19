@@ -235,6 +235,12 @@
   (diss-feh-image-mode-categorize ?*)
   (diss-feh-image-mode-next))
 
+(defun diss-feh-image-mode-unmark-and-next ()
+  "Remove mark from the current image and advance."
+  (interactive)
+  (diss-mode--unmark diss-feh-image-mode--slideshow (diss-feh--title->filename))
+  (diss-feh-image-mode-next))
+
 (defun diss-image-mode-unmark-and-next ()
   "Remove mark from the current image and advance."
   (interactive)
