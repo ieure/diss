@@ -193,9 +193,11 @@
   (s-ends-with? "[Paused]" exwm-title))
 
 (defun diss-feh--update-title-hook ()
-  (with-slots (mark paused feh-buffer) diss-feh-image-mode--slideshow
-    (when (and mark (buffer-live-p feh-buffer))
-      (diss-mode--mark diss-feh-image-mode--slideshow (diss-feh--title->filename) mark))
+  (with-slots (mark paused current feh-buffer) diss-feh-image-mode--slideshow
+    (let ((feh-current (diss-feh--title->filename)))
+      (when (and mark (buffer-live-p feh-buffer))
+        (diss-mode--mark diss-feh-image-mode--slideshow feh-current mark)
+        (setf current feh-current)))
     (setf paused (diss-feh--title->paused?))))
 
 (defun diss-feh-image-mode--automatic-move ()
