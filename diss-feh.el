@@ -152,9 +152,12 @@
     (define-key km "q" 'diss-feh-image-mode-quit)
     (define-key km "e" 'diss-feh-image-mode-set-prefix-name-and-next)
     (define-key km "p" 'diss-feh-image-mode-previous-and-pause)
+    (define-key km "r" 'diss-feh-image-mode-rotate-cw)
+    (define-key km "R" 'diss-feh-image-mode-rotate-ccw)
     (define-key km "u" 'diss-feh-image-mode-unmark-and-next)
     (define-key km "d" 'diss-feh-image-mode-delete-and-next)
     (define-key km "m" 'diss-feh-image-mode-mark-and-next)
+    (define-key km "j" 'diss-feh-image-mode-junk-and-next)
     (define-key km "c" 'diss-feh-image-mode-categorize-and-next)
     (define-key km (kbd "SPC") 'diss-feh-image-mode-toggle-paused)
     (define-key km (kbd "<mouse-3>") 'diss-feh-image-mode-toggle-paused)
@@ -237,13 +240,13 @@
   (diss-feh-image-mode-categorize ?*)
   (diss-feh-image-mode-next))
 
-(defun diss-feh-image-mode-unmark-and-next ()
-  "Remove mark from the current image and advance."
+(defun diss-feh-image-mode-junk-and-next ()
+  "Mark the current image as junk and advance."
   (interactive)
-  (diss-mode--unmark diss-feh-image-mode--slideshow (diss-feh--title->filename))
+  (diss-feh-image-mode-categorize ?j)
   (diss-feh-image-mode-next))
 
-(defun diss-image-mode-unmark-and-next ()
+(defun diss-feh-image-mode-unmark-and-next ()
   "Remove mark from the current image and advance."
   (interactive)
   (diss-mode--unmark diss-feh-image-mode--slideshow (diss-feh--title->filename))
@@ -286,6 +289,12 @@ with it."
   (interactive)
   (diss-feh-image-mode-categorize ?D)
   (diss-feh-image-mode-next))
+
+(defun diss-feh-image-mode-rotate-cw ()
+  (exwm-input--fake-key ?>))
+
+(defun diss-feh-image-mode-rotate-ccw ()
+  (exwm-input--fake-key ?<))
 
 (defun diss-feh-image-mode-previous-and-pause ()
   "Go back to the previous image, and pause."
