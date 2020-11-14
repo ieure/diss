@@ -403,7 +403,7 @@ there."
   (cl-loop
    for file in files
    do (dired-rename-file file
-                         (concat dest "/" (file-name-nondirectory file)) nil)))
+                         (concat dest "/" (file-name-nondirectory file)) t)))
 
 (defun diss-sort ()
   "Sort marked images.
@@ -435,6 +435,7 @@ Renames according to `diss-sort-destinations'."
     (define-key km "u" 'diss-image-mode-unmark-and-next)
     (define-key km "d" 'diss-image-mode-delete-and-next)
     (define-key km "m" 'diss-image-mode-mark-and-next)
+    (define-key km "j" 'diss-image-mode-junk-and-next)
 
     (define-key km "x" 'diss-image-mode-fit-to-width)
     (define-key km "y" 'diss-image-mode-fit-to-height)
@@ -658,6 +659,12 @@ If the end of the slideshow is reached, display the Diss buffer."
   "Mark the current image and advance."
   (interactive)
   (diss-mode--mark diss-image-mode--slideshow (buffer-file-name) ?* t)
+  (diss-image-mode-next))
+
+(defun diss-image-mode-junk-and-next ()
+  "Mark the current image as junk and advance."
+  (interactive)
+  (diss-mode--mark diss-image-mode--slideshow (buffer-file-name) ?j t)
   (diss-image-mode-next))
 
 (defun diss-image-mode-unmark-and-next ()
