@@ -459,6 +459,7 @@ Renames according to `diss-sort-destinations'."
     (define-key km "P" 'diss-image-mode-previous-other-window)
     (define-key km "N" 'diss-image-mode-next-other-window)
     (define-key km "q" 'diss-image-mode-quit)
+    (define-key km "s" 'diss-image-mode-pop-to-list)
 
     (define-key km "e" 'diss-image-mode-set-prefix-name-and-next)
 
@@ -717,6 +718,11 @@ If the end of the slideshow is reached, display the Diss buffer."
   (interactive)
   (diss-slideshow-pause! diss-image-mode--slideshow)
   (bury-buffer))
+
+(defun diss-image-mode-pop-to-list ()
+  "Pop to the main diss buffer."
+  (with-slots (buffer) diss-image-mode--slideshow
+    (pop-to-buffer buffer)))
 
 (defun diss-image-mode-toggle-paused ()
   "Toggle whether the current slideshow is paused."
