@@ -63,6 +63,10 @@
       (setf paused (not(diss-feh--title->paused?)))
       (exwm-input--fake-key ?h))))
 
+(cl-defmethod diss--move ((this diss-feh-slideshow) &optional arg find-function)
+  (let ((key (if (> (signum arg) 0) ?n ?p)))
+    (exwm-input--fake-key key)))
+
  ;; Diss-feh-mode
 
 (defvar diss-feh-mode-map
