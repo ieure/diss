@@ -36,7 +36,9 @@
  ;; Class
 
 (defclass diss-feh-slideshow (diss-slideshow)
-  ((feh-buffer :initarg :feh-buffer
+  ((major-mode :initform 'diss-feh-mode
+               :documentation "The major mode to control the diss buffer.")
+   (feh-buffer :initarg :feh-buffer
                :documentation "The buffer where Feh is being displayed.")))
 
 (cl-defmethod diss--slideshow-begin ((this diss-feh-slideshow))
