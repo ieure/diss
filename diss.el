@@ -68,7 +68,9 @@ of arguments passed to constructor function `diss-slideshow'."
   "The class to use for the slideshow object.")
 
 (defclass diss-slideshow nil
-  ((step :initform 1
+  ((major-mode :initform 'diss-mode
+               :documentation "The major mode to control the diss buffer.")
+   (step :initform 1
          :initarg :step
          :documentation "How many images to advance by when navigating.")
    (loop :initform nil
@@ -221,12 +223,15 @@ Passes ARGS to the function specified in `diss--slideshow-class'."
 
   (let ((dsal dired-subdir-alist))
     (switch-to-buffer (clone-indirect-buffer (format "*diss %s*" dired-directory) nil))
-    (funcall diss--slideshow-class)
-    (setq-local dired-subdir-alist dsal)
     (goto-char (point-min))
-    (add-to-list 'diss--active (setq diss-mode--slideshow (apply diss--slideshow-class :buffer (current-buffer) args)))
+    (let ((ss (apply diss--slideshow-class :buffer (current-buffer) args)))
+      (add-to-list 'diss--active ss)
+      ;; Enable the diss major mode.
+      (funcall (oref ss major-mode))
+      (setq-local dired-subdir-alist dsal)
+      (setq diss-mode--slideshow ss)
 
-    (diss--slideshow-begin diss-mode--slideshow)))
+      (diss--slideshow-begin diss-mode--slideshow))))
 
 (defun diss--slideshow->args (ss)
   "Return arguments for current configutation of slideshow SS."
