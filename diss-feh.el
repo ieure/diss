@@ -203,21 +203,6 @@
         (setf current feh-current)))
     (setf paused (diss-feh--title->paused?))))
 
-(defun diss-feh-image-mode--automatic-move ()
-  "Automatically advance buf IMAGE-BUFFER to the next image in slideshow SS."
-  (with-slots (paused mark) ss
-    (when (and (diss-slideshow-active? ss)
-               (not paused)
-               (not (minibufferp)))
-      (if-let ((window (display-buffer-reuse-window image-buffer nil)))
-          (with-current-buffer image-buffer
-            (when mark
-              (diss-mode--mark ss (buffer-file-name) mark))
-            (with-selected-window window
-              (diss--move diss-feh-image-mode--slideshow (oref ss step))))
-        ;; If no window is displaying the buffer anymore, pause.
-        (diss-slideshow-pause! ss)))))
-
 (defun diss-feh-image-mode-previous (&optional arg)
   "Move ARG images backward in the slideshow."
   (interactive "p")
