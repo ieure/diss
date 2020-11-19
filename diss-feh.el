@@ -138,9 +138,9 @@
 
  ;; diss-feh-image-mode
 
-
 (defvar diss-feh-image-mode-map
   (let ((km (make-sparse-keymap)))
+    (define-key km "s" 'diss-image-mode-pop-to-list)
     (define-key km "q" 'diss-image-mode-quit)
     (define-key km "e" 'diss-image-mode-set-prefix-name-and-next)
     (define-key km "p" 'diss-image-mode-previous-and-pause)
