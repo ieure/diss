@@ -186,16 +186,16 @@ Each element is a cons cell of (IMAGE . DISS-BUFFER).")
 
 If the file already has a mark, do nothing, unless FORCE is
 non-NIL."
-  (diss-mode--ensure ss filename)
-  (with-current-buffer (oref ss buffer)
-    (when (or force                     ; Replace mark
-              (save-mark-and-excursion
-                (beginning-of-line)
-                (equal ?\040 (following-char)))) ; File is unmarked
+  (when (diss-mode--ensure ss filename)
+    (with-current-buffer (oref ss buffer)
+      (when (or force                     ; Replace mark
+                (save-mark-and-excursion
+                  (beginning-of-line)
+                  (equal ?\040 (following-char)))) ; File is unmarked
 
-      (let ((dired-marker-char char)
-            (mark-active nil))          ; Never mark a region
-        (dired-mark nil nil)))))
+        (let ((dired-marker-char char)
+              (mark-active nil))          ; Never mark a region
+          (dired-mark nil nil))))))
 
 (defun diss-mode--unmark (ss filename)
   "Unmark FILENAME in slideshow SS."
