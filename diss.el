@@ -114,8 +114,9 @@ of arguments passed to constructor function `diss-slideshow'."
 (cl-defmethod diss-slideshow-toggle-pause! ((this diss-slideshow))
   "Pause or resume slideshow THIS."
   (with-slots (paused) this
-    (when (and (setf paused (not paused)) diss--timer)
-      (cancel-timer diss--timer))
+    (if (and (setf paused (not paused)) diss--timer)
+        (cancel-timer diss--timer)
+      (diss-image-mode--automatic this (current-buffer)))
     paused))
 
 (defvar diss--active nil
@@ -727,8 +728,7 @@ If the end of the slideshow is reached, display the Diss buffer."
 (defun diss-image-mode-toggle-paused ()
   "Toggle whether the current slideshow is paused."
   (interactive)
-  (unless (diss-slideshow-toggle-pause! diss-image-mode--slideshow)
-    (diss-image-mode--automatic diss-image-mode--slideshow (current-buffer))))
+  (diss-slideshow-toggle-pause! diss-image-mode--slideshow))
 
 (provide 'diss)
 ;;; diss.el ends here

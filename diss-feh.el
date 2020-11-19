@@ -51,14 +51,14 @@
 
 (cl-defmethod diss-slideshow-pause! ((this diss-feh-slideshow))
   "Pause slideshow THIS."
-  (with-slots (feh-buffer) diss-feh-image-mode--slideshow
+  (with-slots (feh-buffer) diss-image-mode--slideshow
     (with-current-buffer feh-buffer
       (unless (diss-feh--title->paused?)
         (diss-slideshow-toggle-pause! this)))))
 
 (cl-defmethod diss-slideshow-toggle-pause! ((this diss-feh-slideshow))
   "Pause or resume slideshow THIS."
-  (with-slots (feh-buffer) diss-feh-image-mode--slideshow
+  (with-slots (feh-buffer) diss-image-mode--slideshow
     (with-current-buffer feh-buffer
       (exwm-input--fake-key ?h)
       (setf paused (diss-feh--title->paused?)))))
@@ -138,9 +138,6 @@
 
  ;; diss-feh-image-mode
 
-(defvar diss-feh-image-mode--slideshow nil
-  "The slideshow object this `DISS-FEH-IMAGE-MODE' buffer is associated with.")
-(make-variable-buffer-local 'diss-feh-image-mode--slideshow)
 
 (defvar diss-feh-image-mode-map
   (let ((km (make-sparse-keymap)))
@@ -154,7 +151,7 @@
     (define-key km "m" 'diss-image-mode-mark-and-next)
     (define-key km "j" 'diss-image-mode-junk-and-next)
     (define-key km "c" 'diss-image-mode-categorize-and-next)
-    (define-key km (kbd "SPC") 'diss-feh-image-mode-toggle-paused)
+    (define-key km (kbd "SPC") 'diss-image-mode-toggle-paused)
     (define-key km (kbd "<mouse-3>") 'diss-feh-image-mode-toggle-paused)
     km)
   "Keymap for DISS-FEH-IMAGE-MODE.")
@@ -170,9 +167,9 @@
 (defun diss-feh--exwm-capture ()
   "Capture feh when it starts up."
   (when (and diss-feh-mode--capture (string= exwm-class-name "feh"))
-    (setq diss-feh-image-mode--slideshow diss-feh-mode--capture
+    (setq diss-image-mode--slideshow diss-feh-mode--capture
           diss-feh-mode--capture nil)
-    (with-slots (feh-buffer) diss-feh-image-mode--slideshow
+    (with-slots (feh-buffer) diss-image-mode--slideshow
       (setq feh-buffer (current-buffer)))
 
     ;; Enable fixed geometry mode, this seems to be impossible via the
@@ -194,10 +191,10 @@
 
 (defun diss-feh--update-title-hook ()
   "Handle title updated events from feh."
-  (with-slots (mark paused current feh-buffer) diss-feh-image-mode--slideshow
+  (with-slots (mark paused current feh-buffer) diss-image-mode--slideshow
     (let ((feh-current (diss-feh--title->filename)))
       (when (and mark (buffer-live-p feh-buffer))
-        (diss-mode--mark diss-feh-image-mode--slideshow feh-current mark)
+        (diss-mode--mark diss-image-mode--slideshow feh-current mark)
         (setf current feh-current)))
     (setf paused (diss-feh--title->paused?))))
 
