@@ -40,7 +40,7 @@
                :documentation "The buffer where Feh is being displayed.")))
 
 (cl-defmethod diss--slideshow-begin ((this diss-feh-slideshow))
-  "Start the DISS/feh slideshow."
+  "Start the slideshow."
   ;; Side-effect: sets current file.
   (unless (diss-mode--navigate this)
     (error "Found no file in DISS buffer?!"))
@@ -48,14 +48,14 @@
   (diss-feh--spawn))
 
 (cl-defmethod diss-slideshow-pause! ((this diss-feh-slideshow))
-  "Pause DISS/Feh slideshow THIS."
+  "Pause slideshow THIS."
   (with-slots (feh-buffer) diss-feh-image-mode--slideshow
     (with-current-buffer feh-buffer
       (unless (diss-feh--title->paused?)
         (diss-slideshow-toggle-pause! this)))))
 
 (cl-defmethod diss-slideshow-toggle-pause! ((this diss-feh-slideshow))
-  "Pause or resume DISS/Feh slideshow THIS."
+  "Pause or resume slideshow THIS."
   (with-slots (feh-buffer) diss-feh-image-mode--slideshow
     (with-current-buffer feh-buffer
       (exwm-input--fake-key ?h)
@@ -72,11 +72,11 @@
   "Keymap for DISS-FEH-MODE.")
 
 (define-derived-mode diss-feh-mode diss-mode "DISS/feh"
-  "Major mode for Dired Image Slideshows (feh backend)."
+  "Major mode for Dired Image Slideshows with feh backend."
   (setq-local diss--slideshow-class 'diss-feh-slideshow))
 
 (defun diss-feh--make-list ()
-  "Create the list of files for the slideshow.  Returns path to filelist."
+  "Create the list of files for the slideshow.  Returns path to file list."
   (let ((save-silently t))
     (make-temp-file "fehdiss" nil nil
                     (with-output-to-string
@@ -87,7 +87,7 @@
                              (princ (concat file "\n"))))))))))
 
 (defun diss-feh--args ()
-  "Return list of arguments to feh."
+  "Return list of command-line arguments to pass to feh."
   (with-slots (current step delay loop paused) diss-mode--slideshow
     (let ((delay (if (and delay paused) (* -1 delay) delay)))
     `("--scale-down"
@@ -103,6 +103,7 @@
       ,@(when (<= step -1) '("--reverse"))))))
 
 (defun diss-feh--spawn ()
+  "Spawn the feh process.  Returns process object."
   (when (and diss-feh-mode--process
              (processp diss-feh-mode--process)
              (process-live-p diss-feh-mode--process))
@@ -147,10 +148,10 @@
     (define-key km (kbd "SPC") 'diss-feh-image-mode-toggle-paused)
     (define-key km (kbd "<mouse-3>") 'diss-feh-image-mode-toggle-paused)
     km)
-  "Keymap for DISS-IMAGE-MODE.")
+  "Keymap for DISS-FEH-IMAGE-MODE.")
 
 (define-minor-mode diss-feh-image-mode
-  "Minor mode for Dired Image Slideshow, feh edition." nil " DISS/feh"
+  "Minor mode for Dired Image Slideshow with feh backend." nil " DISS/feh"
   diss-feh-image-mode-map
 
   (when diss-feh-image-mode
@@ -172,15 +173,18 @@
     (diss-feh-image-mode)))
 
 (defun diss-feh--title->filename ()
+  "Return the currently-displayed filename for the feh title."
   (let ((raw (substring exwm-title 8)))
     (if (s-ends-with? " [Paused]" raw)
         (substring raw 0 -9)
       raw)))
 
 (defun diss-feh--title->paused? ()
+  "Is feh paused?"
   (s-ends-with? "[Paused]" exwm-title))
 
 (defun diss-feh--update-title-hook ()
+  "Handle title updated events from feh."
   (with-slots (mark paused current feh-buffer) diss-feh-image-mode--slideshow
     (let ((feh-current (diss-feh--title->filename)))
       (when (and mark (buffer-live-p feh-buffer))
@@ -189,9 +193,11 @@
     (setf paused (diss-feh--title->paused?))))
 
 (defun diss-feh-image-mode-rotate-cw ()
+  "Rotate image clockwise."
   (exwm-input--fake-key ?>))
 
 (defun diss-feh-image-mode-rotate-ccw ()
+  "Rotate image counterclockwise."
   (exwm-input--fake-key ?<))
 
 (provide 'diss-feh)
