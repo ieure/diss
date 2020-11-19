@@ -434,7 +434,7 @@ there."
     (let ((beg (line-beginning-position)))
       (goto-char (point-max))
       (dired-prev-marked-file 1)
-      (narrow-to-region beg (line-end-position)))))
+      (narrow-to-region beg (1+ (line-end-position))))))
 
 (defun diss-sort ()
   "Sort marked images.
