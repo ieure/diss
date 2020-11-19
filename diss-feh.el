@@ -86,7 +86,7 @@
                            (when (string-match diss-mode--image-regexp file)
                              (princ (concat file "\n"))))))))))
 
-(defun diss-feh--args ()
+(defun diss-feh--args (filelist)
   "Return list of command-line arguments to pass to feh."
   (with-slots (current step delay loop paused) diss-mode--slideshow
     (let ((delay (if (and delay paused) (* -1 delay) delay)))
@@ -96,7 +96,7 @@
       "--image-bg" "#444"
       ,@(when delay `("--slideshow-delay" ,(number-to-string delay)))
       "--on-last-slide" ,(if loop "resume" "hold")
-      "--filelist" ,(diss-feh--make-list)
+      "--filelist" ,filelist
       "--no-recursive"
       "--draw-filename"
       "--start-at" ,current
@@ -111,9 +111,16 @@
 
   (setq diss-feh-mode--capture diss-mode--slideshow)
   (add-to-list 'exwm-manage-finish-hook 'diss-feh--exwm-capture)
-  (let ((args (diss-feh--args)))
+  (let* ((filelist (diss-feh--make-list))
+         (args (diss-feh--args filelist)))
     (setq diss-feh-mode--process
-          (apply #'start-process "feh" nil "feh" args))))
+          (make-process
+           :name "diss/feh"
+           :buffer nil
+           :command (cons "feh" args)
+           :sentinel (lambda (process _message)
+                       (when (eq 'exit (process-status process))
+                         (delete-file filelist nil)))))))
 
 (defun diss-feh-resume ()
   "Resume a paused slideshow."
