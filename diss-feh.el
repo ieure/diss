@@ -203,10 +203,12 @@
 
 (defun diss-feh-image-mode-rotate-cw ()
   "Rotate image clockwise."
+  (interactive)
   (exwm-input--fake-key ?>))
 
 (defun diss-feh-image-mode-rotate-ccw ()
   "Rotate image counterclockwise."
+  (interactive)
   (exwm-input--fake-key ?<))
 
 (provide 'diss-feh)
