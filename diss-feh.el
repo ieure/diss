@@ -60,8 +60,8 @@
   "Pause or resume slideshow THIS."
   (with-slots (feh-buffer) diss-image-mode--slideshow
     (with-current-buffer feh-buffer
-      (exwm-input--fake-key ?h)
-      (setf paused (diss-feh--title->paused?)))))
+      (setf paused (not(diss-feh--title->paused?)))
+      (exwm-input--fake-key ?h))))
 
  ;; Diss-feh-mode
 
@@ -143,7 +143,7 @@
     (define-key km "s" 'diss-image-mode-pop-to-list)
     (define-key km "q" 'diss-image-mode-quit)
     (define-key km "e" 'diss-image-mode-set-prefix-name-and-next)
-    (define-key km "p" 'diss-image-mode-previous-and-pause)
+    (define-key km "p" 'diss-image-mode-previous)
     (define-key km "r" 'diss-feh-image-mode-rotate-cw)
     (define-key km "R" 'diss-feh-image-mode-rotate-ccw)
     (define-key km "u" 'diss-image-mode-unmark-and-next)
@@ -152,7 +152,7 @@
     (define-key km "j" 'diss-image-mode-junk-and-next)
     (define-key km "c" 'diss-image-mode-categorize-and-next)
     (define-key km (kbd "SPC") 'diss-image-mode-toggle-paused)
-    (define-key km (kbd "<mouse-3>") 'diss-feh-image-mode-toggle-paused)
+    (define-key km (kbd "<mouse-3>") 'diss-image-mode-toggle-paused)
     km)
   "Keymap for DISS-FEH-IMAGE-MODE.")
 

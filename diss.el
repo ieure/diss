@@ -634,16 +634,17 @@ with it."
       (setq diss-image-mode--slideshow slideshow)
       (diss-image-mode 1))))
 
-(defun diss--move (ss &optional arg find-function)
-  "Find the ARG-th file in slideshow SS with FIND-FUNCTION.
+(cl-defmethod diss--move ((this diss-slideshow) &optional arg find-function)
+  "Find the ARG-th file in slideshow THIS with FIND-FUNCTION.
 
 If ARG is omitted, use the slideshow's step.
 If the end of the slideshow is reached, display the Diss buffer."
-  (when-let ((current (or (buffer-file-name) (oref ss current))))
-    (diss-mode--ensure ss current))
-  (let ((arg (or arg (oref ss step)))
+  (with-slots (current step) this
+    (when-let ((current (or (buffer-file-name) current)))
+      (diss-mode--ensure this current)))
+  (let ((arg (or arg step))
         (image-transform-resize nil))   ; Don't resize on open
-    (if-let ((next-file (diss-mode--navigate ss arg)))
+    (if-let ((next-file (diss-mode--navigate this arg)))
         (progn
           ;; If a buffer is showing the file already, kill it.
           (when-let ((buf (find-buffer-visiting next-file)))
@@ -651,7 +652,7 @@ If the end of the slideshow is reached, display the Diss buffer."
           (diss--without-scaling
            (funcall (or find-function #'find-alternate-file) next-file)))
       ;; Slideshow is over, show the Diss buffer
-      (pop-to-buffer (oref ss buffer)))))
+      (pop-to-buffer buffer))))
 
 (defun diss-image-mode-next (&optional arg)
   "Move ARG images forward in the slideshow."
