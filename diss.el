@@ -94,6 +94,10 @@ of arguments passed to constructor function `diss-slideshow'."
   :allow-nil-initform t
   :documentation "Class representing an in-progress slideshow.")
 
+(cl-defmethod diss--slideshow-begin ((this diss-slideshow))
+  "Begin the slideshow."
+  (diss--move this nil #'find-file))
+
 (cl-defmethod diss-slideshow-active? ((this diss-slideshow))
   "Returns non-NIL if THIS is an active slideshow."
   (buffer-live-p (oref this buffer)))
@@ -158,9 +162,7 @@ Each element is a cons cell of (IMAGE . DISS-BUFFER).")
 
 (define-derived-mode diss-mode dired-mode "DISS"
   "Major mode for Dired Image Slideshows."
-  (add-hook 'image-mode-hook 'diss-image-mode--maybe-enable)
-  ;; Tell diss-start* what class to use.
-  'diss-slideshow)
+  (add-hook 'image-mode-hook 'diss-image-mode--maybe-enable))
 
 (defun diss-mode--dired-expanded-filename ()
   "Return the expanded filename of the current dired item."
@@ -203,10 +205,10 @@ non-NIL."
   (with-current-buffer (oref ss buffer)
     (dired-unmark nil nil)))
 
-(defun diss-start* (ss-mode &rest args)
+(defun diss-start* (args)
   "Start a slideshow (internal helper).
 
-Passes ARGS to function `diss-slideshow'."
+Passes ARGS to the function specified in `diss--slideshow-class'."
 
   (unless (eq major-mode 'dired-mode)
     (error "Must be started from Dired"))
@@ -219,14 +221,12 @@ Passes ARGS to function `diss-slideshow'."
 
   (let ((dsal dired-subdir-alist))
     (switch-to-buffer (clone-indirect-buffer (format "*diss %s*" dired-directory) nil))
-    (funcall ss-mode)
+    (funcall diss--slideshow-class)
     (setq-local dired-subdir-alist dsal)
     (goto-char (point-min))
-    (add-to-list 'diss--active (setq diss-mode--slideshow (apply diss--slideshow-class :buffer (current-buffer) args)))))
+    (add-to-list 'diss--active (setq diss-mode--slideshow (apply diss--slideshow-class :buffer (current-buffer) args)))
 
-(defun diss--begin ()
-  "Begin the slideshow."
-  (diss--move diss-mode--slideshow nil #'find-file))
+    (diss--slideshow-begin diss-mode--slideshow)))
 
 (defun diss--slideshow->args (ss)
   "Return arguments for current configutation of slideshow SS."
@@ -269,8 +269,7 @@ Passes ARGS to function `diss-slideshow'."
           "Configuration: "
           (mapcar #'car diss-saved-configurations) nil nil diss--last-config)))
   (setq diss--last-config config-name)
-  (apply #'diss-start* #'diss-mode (diss--maybe-configure config-name))
-  (diss--begin))
+  (diss-start* (diss--maybe-configure config-name)))
 
 (defun diss--all-prefix-names ()
   "Return a list of all prefix names Diss knows about."

@@ -39,6 +39,14 @@
   ((feh-buffer :initarg :feh-buffer
                :documentation "The buffer where Feh is being displayed.")))
 
+(cl-defmethod diss--slideshow-begin ((this diss-feh-slideshow))
+  "Start the DISS/feh slideshow."
+  ;; Side-effect: sets current file.
+  (unless (diss-mode--navigate this)
+    (error "Found no file in DISS buffer?!"))
+
+  (diss-feh--spawn))
+
 (cl-defmethod diss-slideshow-pause! ((this diss-feh-slideshow))
   "Pause DISS/Feh slideshow THIS."
   (with-slots (feh-buffer) diss-feh-image-mode--slideshow
@@ -78,20 +86,6 @@
                            (when (string-match diss-mode--image-regexp file)
                              (princ (concat file "\n"))))))))))
 
-(defun diss-feh-start (config-name)
-  "Start a slideshow from a Dired buffer, using params from CONFIG-NAME."
-  (interactive
-   (list
-    (setq diss-last-config
-          (completing-read
-           "Configuration: "
-           (mapcar #'car diss-saved-configurations)
-           nil nil diss--last-config))))
-
-  (setq diss--last-config config-name)
-  (apply #'diss-start* #'diss-feh-mode (diss--maybe-configure config-name))
-  (diss-feh--begin))
-
 (defun diss-feh--args ()
   "Return list of arguments to feh."
   (with-slots (current step delay loop paused) diss-mode--slideshow
@@ -119,15 +113,6 @@
   (let ((args (diss-feh--args)))
     (setq diss-feh-mode--process
           (apply #'start-process "feh" nil "feh" args))))
-
-(defun diss-feh--begin ()
-  "Start the DISS/feh slideshow."
-
-  ;; Side-effect: sets current file.
-  (unless (diss-mode--navigate diss-mode--slideshow)
-    (error "Found no file in DISS buffer?!"))
-
-  (diss-feh--spawn))
 
 (defun diss-feh-resume ()
   "Resume a paused slideshow."
