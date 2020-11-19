@@ -149,16 +149,16 @@
 
 (defvar diss-feh-image-mode-map
   (let ((km (make-sparse-keymap)))
-    (define-key km "q" 'diss-feh-image-mode-quit)
-    (define-key km "e" 'diss-feh-image-mode-set-prefix-name-and-next)
-    (define-key km "p" 'diss-feh-image-mode-previous-and-pause)
+    (define-key km "q" 'diss-image-mode-quit)
+    (define-key km "e" 'diss-image-mode-set-prefix-name-and-next)
+    (define-key km "p" 'diss-image-mode-previous-and-pause)
     (define-key km "r" 'diss-feh-image-mode-rotate-cw)
     (define-key km "R" 'diss-feh-image-mode-rotate-ccw)
-    (define-key km "u" 'diss-feh-image-mode-unmark-and-next)
-    (define-key km "d" 'diss-feh-image-mode-delete-and-next)
-    (define-key km "m" 'diss-feh-image-mode-mark-and-next)
-    (define-key km "j" 'diss-feh-image-mode-junk-and-next)
-    (define-key km "c" 'diss-feh-image-mode-categorize-and-next)
+    (define-key km "u" 'diss-image-mode-unmark-and-next)
+    (define-key km "d" 'diss-image-mode-delete-and-next)
+    (define-key km "m" 'diss-image-mode-mark-and-next)
+    (define-key km "j" 'diss-image-mode-junk-and-next)
+    (define-key km "c" 'diss-image-mode-categorize-and-next)
     (define-key km (kbd "SPC") 'diss-feh-image-mode-toggle-paused)
     (define-key km (kbd "<mouse-3>") 'diss-feh-image-mode-toggle-paused)
     km)
@@ -203,100 +203,11 @@
         (setf current feh-current)))
     (setf paused (diss-feh--title->paused?))))
 
-(defun diss-feh-image-mode-previous (&optional arg)
-  "Move ARG images backward in the slideshow."
-  (interactive "p")
-  (exwm-input--fake-key ?p))
-
-(defun diss-feh-image-mode-next (&optional arg)
-  "Move ARG images forward in the slideshow."
-  (interactive "p")
-  (exwm-input--fake-key ?n))
-
-(defun diss-feh-image-mode-categorize (char)
-  "Mark the current image with CHAR."
-  (interactive (list (read-char-exclusive "Category char: " t)))
-  (when char
-    (diss-mode--mark diss-feh-image-mode--slideshow (diss-feh--title->filename) char t)))
-
-(defun diss-feh-image-mode-mark-and-next ()
-  "Mark the current image and advance."
-  (interactive)
-  (diss-feh-image-mode-categorize ?*)
-  (diss-feh-image-mode-next))
-
-(defun diss-feh-image-mode-junk-and-next ()
-  "Mark the current image as junk and advance."
-  (interactive)
-  (diss-feh-image-mode-categorize ?j)
-  (diss-feh-image-mode-next))
-
-(defun diss-feh-image-mode-unmark-and-next ()
-  "Remove mark from the current image and advance."
-  (interactive)
-  (diss-mode--unmark diss-feh-image-mode--slideshow (diss-feh--title->filename))
-  (diss-feh-image-mode-next))
-
-(defun diss-feh-image-mode-categorize-and-next (char)
-  "Mark the current image with CHAR and advance."
-  (interactive (list (read-char-exclusive "Category char: " t)))
-  (when char
-    (diss-feh-image-mode-categorize char)
-    (diss-feh-image-mode-next)))
-
-(defun diss-feh-image-mode-set-prefix-name-and-next (prefix-name &optional marker)
-  "Apply PREFIX-NAME to current file, then advance.
-
-With a prefix arg, prompt for marker char MARKER, and mark file
-with it."
-  (interactive
-   (list
-    (completing-read
-     "Name: "
-     (with-current-buffer (oref diss-feh-image-mode--slideshow buffer)
-       diss--prefix-name-cache)
-     nil
-     nil
-     (diss-mode--prefix-name (diss-feh--title->filename)))
-    (when current-prefix-arg (read-char-exclusive "Category char: " t))))
-
-  (add-to-list 'diss--prefix-name-cache prefix-name)
-  (let* ((bfn (diss-feh--title->filename))
-         (new-name (concat prefix-name "_" (cdr (diss-mode--prefix-and-name bfn)))))
-    (with-current-buffer (oref diss-feh-image-mode--slideshow buffer)
-      (let ((marker (or marker (dired-file-marker bfn))))
-        (dired-rename-file bfn new-name nil)
-        (dired-add-entry new-name marker t)))
-    (diss-feh-image-mode-next)))
-
-(defun diss-feh-image-mode-delete-and-next ()
-  "Flag the current image for deletion and advance."
-  (interactive)
-  (diss-feh-image-mode-categorize ?D)
-  (diss-feh-image-mode-next))
-
 (defun diss-feh-image-mode-rotate-cw ()
   (exwm-input--fake-key ?>))
 
 (defun diss-feh-image-mode-rotate-ccw ()
   (exwm-input--fake-key ?<))
-
-(defun diss-feh-image-mode-previous-and-pause ()
-  "Go back to the previous image, and pause."
-  (interactive)
-  (diss-slideshow-pause! diss-feh-image-mode--slideshow)
-  (diss-feh-image-mode-previous))
-
-(defun diss-feh-image-mode-quit ()
-  "Flag the current image for deletion and advance."
-  (interactive)
-  (diss-slideshow-pause! diss-feh-image-mode--slideshow)
-  (bury-buffer))
-
-(defun diss-feh-image-mode-toggle-paused ()
-  "Toggle whether the current slideshow is paused."
-  (interactive)
-  (diss-slideshow-toggle-pause! diss-feh-image-mode--slideshow))
 
 (provide 'diss-feh)
 ;;; diss-feh.el ends here
