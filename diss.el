@@ -372,6 +372,23 @@ With prefix ARG, inverts the value of var `delete-by-moving-to-trash'."
     (setf current (diss-mode--dired-expanded-filename))
     (diss-resume)))
 
+(defun diss--sort-destination-prefix (filename)
+  "Determine the sort destination based on FILENAME's prefix name."
+  (when-let ((prefix (car (diss-mode--prefix-and-name filename))))
+    (cl-loop for dest in diss-sort-destinations
+             if (string= prefix (file-name-nondirectory (cdr dest)))
+             return (cdr dest))))
+
+(defun diss--sort-destination-mark (mark)
+  "Determine the sort destination based on MARK."
+  (cdr (assoc mark diss-sort-destinations)))
+
+(defun diss--sort-destination (mark filename)
+  "Determine the sort destination based on MARK and FILENAME."
+  (if-let ((mark-dest (diss--sort-destination-mark mark)))
+      mark-dest
+    (when (= ?* mark) (diss--sort-destination-prefix filename))))
+
 (defun diss--sort* ()
   "Return file sorting information.
 
@@ -387,7 +404,7 @@ there."
        (let ((mark (save-mark-and-excursion
                      (beginning-of-line)
                      (following-char))))
-         (when-let ((dest (cdr (assoc mark diss-sort-destinations))))
+         (when-let ((dest (diss--sort-destination mark file)))
            (unless (assoc dest dests-files)
              (push (list dest) dests-files))
            (push file (cdr (assoc dest dests-files)))
@@ -405,16 +422,28 @@ there."
    do (dired-rename-file file
                          (concat dest "/" (file-name-nondirectory file)) t)))
 
+(defun diss--narrow-to-marked ()
+  "Narrow the buffer to the section containing marked files."
+  (save-excursion
+    (goto-char (point-min))
+    (dired-next-marked-file 1)
+    (let ((beg (line-beginning-position)))
+      (goto-char (point-max))
+      (dired-prev-marked-file 1)
+      (narrow-to-region beg (line-end-position)))))
+
 (defun diss-sort ()
   "Sort marked images.
 
 Renames according to `diss-sort-destinations'."
   (interactive)
-  (diss--move-to-first-unmarked)
-  (cl-destructuring-bind (dests-files . num-files) (diss--sort*)
-    (when (and (> num-files 0)
-               (y-or-n-p (format "Sort %d file%s? " num-files (if (> num-files 1) "s" ""))))
-      (mapc #'diss--rename-to dests-files))))
+  (save-restriction
+    (widen)
+    (diss--narrow-to-marked)
+    (cl-destructuring-bind (dests-files . num-files) (diss--sort*)
+      (when (and (> num-files 0)
+                 (y-or-n-p (format "Sort %d file%s? " num-files (if (> num-files 1) "s" ""))))
+        (mapc #'diss--rename-to dests-files)))))
 
  ;; Minor mode for images in the slideshow.
 
