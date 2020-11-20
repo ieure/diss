@@ -326,7 +326,7 @@ Passes ARGS to the function specified in `diss--slideshow-class'."
 
           ;; Adjust window point
           (diss-mode--map-windows-displaying
-           (current-buffer)
+           buffer
            (lambda (window) (set-window-point window (point))))
 
           ;; Return file
@@ -565,11 +565,11 @@ with it."
        diss--prefix-name-cache)
      nil
      nil
-     (diss-mode--prefix-name (buffer-file-name)))
+     (diss-mode--prefix-name (oref diss-image-mode--slideshow current)))
     (when current-prefix-arg (read-char-exclusive "Category char: " t))))
 
   (add-to-list 'diss--prefix-name-cache prefix-name)
-  (let* ((bfn (buffer-file-name))
+  (let* ((bfn (oref diss-image-mode--slideshow current))
          (new-name (concat prefix-name "_" (cdr (diss-mode--prefix-and-name bfn)))))
     (with-current-buffer (oref diss-image-mode--slideshow buffer)
       (let ((marker (or marker (dired-file-marker bfn))))
@@ -688,31 +688,36 @@ If the end of the slideshow is reached, display the Diss buffer."
   "Mark the current image with CHAR and advance."
   (interactive (list (read-char-exclusive "Category char: " t)))
   (when char
-    (diss-mode--mark diss-image-mode--slideshow (buffer-file-name) char t)
+    (with-slots (current) diss-image-mode--slideshow
+      (diss-mode--mark diss-image-mode--slideshow current char t))
     (diss-image-mode-next)))
 
 (defun diss-image-mode-mark-and-next ()
   "Mark the current image and advance."
   (interactive)
-  (diss-mode--mark diss-image-mode--slideshow (buffer-file-name) ?* t)
+  (with-slots (current) diss-image-mode--slideshow
+    (diss-mode--mark diss-image-mode--slideshow current ?* t))
   (diss-image-mode-next))
 
 (defun diss-image-mode-junk-and-next ()
   "Mark the current image as junk and advance."
   (interactive)
-  (diss-mode--mark diss-image-mode--slideshow (buffer-file-name) ?j t)
+  (with-slots (current) diss-image-mode--slideshow
+    (diss-mode--mark diss-image-mode--slideshow current ?j t))
   (diss-image-mode-next))
 
 (defun diss-image-mode-unmark-and-next ()
   "Remove mark from the current image and advance."
   (interactive)
-  (diss-mode--unmark diss-image-mode--slideshow (buffer-file-name))
+  (with-slots (current) diss-image-mode--slideshow
+    (diss-mode--unmark diss-image-mode--slideshow current))
   (diss-image-mode-next))
 
 (defun diss-image-mode-delete-and-next ()
   "Flag the current image for deletion and advance."
   (interactive)
-  (diss-mode--mark diss-image-mode--slideshow (buffer-file-name) ?D t)
+  (with-slots (current) diss-image-mode--slideshow
+    (diss-mode--mark diss-image-mode--slideshow current ?D t))
   (diss-image-mode-next))
 
 (defun diss-image-mode-quit ()
