@@ -64,7 +64,7 @@
       (exwm-input--fake-key ?h))))
 
 (cl-defmethod diss--move ((this diss-feh-slideshow) &optional arg find-function)
-  (let ((key (if (> (signum arg) 0) ?n ?p)))
+  (let ((key (if (> (signum (or arg 1)) 0) ?n ?p)))
     (exwm-input--fake-key key)))
 
  ;; Diss-feh-mode
