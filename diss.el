@@ -754,6 +754,7 @@ If the end of the slideshow is reached, display the Diss buffer."
 (defun diss-image-mode-pop-to-list ()
   "Pop to the main diss buffer."
   (interactive)
+  (diss-slideshow-pause! diss-image-mode--slideshow)
   (with-slots (buffer) diss-image-mode--slideshow
     (pop-to-buffer buffer)))
 
