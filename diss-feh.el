@@ -184,25 +184,23 @@
 
     (diss-feh-image-mode)))
 
-(defun diss-feh--title->filename ()
-  "Return the currently-displayed filename for the feh title."
+(defun diss-feh--title->state ()
+  "Return (FILENAME . PAUSED) state, based on the feh window title."
   (let ((raw (substring exwm-title 8)))
     (if (s-ends-with? " [Paused]" raw)
-        (substring raw 0 -9)
-      raw)))
-
-(defun diss-feh--title->paused? ()
-  "Is feh paused?"
-  (s-ends-with? "[Paused]" exwm-title))
+        (cons (substring raw 0 -9) t)
+      (cons raw nil))))
 
 (defun diss-feh--update-title-hook ()
   "Handle title updated events from feh."
   (with-slots (mark paused current feh-buffer) diss-image-mode--slideshow
-    (let ((feh-current (diss-feh--title->filename)))
-      (when (and mark (buffer-live-p feh-buffer))
-        (diss-mode--mark diss-image-mode--slideshow feh-current mark)
-        (setf current feh-current)))
-    (setf paused (diss-feh--title->paused?))))
+    ;; Update state based on the title.
+    (cl-destructuring-bind (ncurrent . npaused) (diss-feh--title->state)
+      (when (and mark (buffer-live-p feh-buffer) (not (string= current ncurrent)))
+        ;; Mark the image that was being displayed before the update.
+        (diss-mode--mark diss-image-mode--slideshow current mark))
+      (setf current ncurrent
+            paused npaused))))
 
 (defun diss-feh-image-mode-rotate-cw ()
   "Rotate image clockwise."
