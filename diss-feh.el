@@ -126,7 +126,9 @@
            :command (cons "feh" args)
            :sentinel (lambda (process _message)
                        (when (eq 'exit (process-status process))
-                         (delete-file filelist nil)))))))
+                         (delete-file filelist nil))
+                       (with-slots (paused) diss-mode--slideshow
+                         (setf paused t)))))))
 
 (defun diss-feh-resume ()
   "Resume a paused slideshow."
