@@ -500,6 +500,7 @@ Renames according to `diss-sort-destinations'."
     (define-key km "0" 'image-transform-reset)
 
     (define-key km "c" 'diss-image-mode-categorize-and-next)
+    (define-key km "v" 'diss-image-mode-rename-file-and-advance)
     km)
   "Keymap for DISS-IMAGE-MODE.")
 
@@ -593,6 +594,12 @@ with it."
       (let ((marker (or marker (dired-file-marker bfn))))
         (dired-rename-file bfn new-name nil)
         (dired-add-entry new-name marker t)))
+    (diss-image-mode-next)))
+
+(defun diss-image-mode-rename-file-and-advance (dest-dir)
+  (interactive (list (read-directory-name "Move to: ")))
+  (with-slots (current buffer) diss-image-mode--slideshow
+    (dired-rename-file current dest-dir nil)
     (diss-image-mode-next)))
 
 (defun diss-image-mode--automatic (ss image-buffer)

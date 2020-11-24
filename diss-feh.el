@@ -162,6 +162,7 @@
     (define-key km "m" 'diss-image-mode-mark-and-next)
     (define-key km "j" 'diss-image-mode-junk-and-next)
     (define-key km "c" 'diss-image-mode-categorize-and-next)
+    (define-key km "v" 'diss-image-mode-rename-file-and-advance)
     (define-key km (kbd "SPC") 'diss-image-mode-toggle-paused)
     (define-key km (kbd "<mouse-3>") 'diss-image-mode-toggle-paused)
     km)
