@@ -35,12 +35,26 @@
   "Dired Image Slideshow"
   :group 'multimedia)
 
+(defvar diss--all-destinations nil)
+
+(defun diss--compute-possible-destinations (dests)
+  (cl-loop for dir in (mapcar #'cdr dests)
+           collect dir
+           append (cl-loop for subdir in (directory-files-and-attributes dir)
+                           unless (string= "." (car subdir))
+                           unless (string= ".." (car subdir))
+                           when (cadr subdir)
+                           collect (concat dir "/" (car subdir)))))
+
 (defcustom diss-sort-destinations nil
   "Diss image sorting destinations.
 
 Alist of Dired marker character to directory.  When `DISS-SORT' is called, images with the corresponding mark are moved to that directory."
   :group 'diss
-  :type '(alist :key-type character :value-type directory))
+  :type '(alist :key-type character :value-type directory)
+  :set (lambda (sym val)
+         (set-default sym val)
+         (setq diss--all-destinations (diss--compute-possible-destinations val))))
 
 (defcustom diss-saved-configurations
   '(("standard" ((:step 1) (:paused t) (:loop nil)))
@@ -377,16 +391,20 @@ With prefix ARG, inverts the value of var `delete-by-moving-to-trash'."
     (setf current (diss-mode--dired-expanded-filename))
     (diss-resume)))
 
+(defun diss--sort-destination-prefix* (prefix)
+  (cl-loop for dest in diss--all-destinations
+           if (string= prefix (file-name-nondirectory dest))
+           return dest))
+
 (defun diss--sort-destination-prefix (filename)
   "Determine the sort destination based on FILENAME's prefix name."
   (when-let ((prefix (car (diss-mode--prefix-and-name filename))))
-    (cl-loop for dest in diss-sort-destinations
-             if (string= prefix (file-name-nondirectory (cdr dest)))
-             return (cdr dest))))
+    (diss--sort-destination-prefix* prefix)))
 
 (defun diss--sort-destination-mark (mark)
   "Determine the sort destination based on MARK."
-  (cdr (assoc mark diss-sort-destinations)))
+  (or (cdr (assoc mark diss-sort-destinations))
+      (diss--sort-destination-prefix* (string mark))))
 
 (defun diss--sort-destination (mark filename)
   "Determine the sort destination based on MARK and FILENAME."
