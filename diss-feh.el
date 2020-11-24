@@ -152,6 +152,11 @@
     (define-key km "p" 'diss-image-mode-previous)
     (define-key km "r" 'diss-feh-image-mode-rotate-cw)
     (define-key km "R" 'diss-feh-image-mode-rotate-ccw)
+
+    (define-key km "x" 'diss-feh-image-mode-fit-to-width)
+    (define-key km "y" 'diss-feh-image-mode-fit-to-height)
+    (define-key km "0" 'diss-feh-image-mode-transform-reset)
+
     (define-key km "u" 'diss-image-mode-unmark-and-next)
     (define-key km "d" 'diss-image-mode-delete-and-next)
     (define-key km "m" 'diss-image-mode-mark-and-next)
@@ -211,6 +216,23 @@
   "Rotate image counterclockwise."
   (interactive)
   (exwm-input--fake-key ?<))
+
+(defun diss-feh-image-mode-rotate-ccw ()
+  "Rotate image counterclockwise."
+  (interactive)
+  (exwm-input--fake-key ?<))
+
+(defun diss-feh-image-mode-fit-to-width ()
+  (interactive)
+  (exwm-input--fake-key ?!))
+
+(defun diss-feh-image-mode-fit-to-height ()
+  (interactive)
+  (exwm-input--fake-key ?/))
+
+(defun diss-feh-image-mode-transform-reset ()
+  (interactive)
+  (exwm-input--fake-key ?*))
 
 (provide 'diss-feh)
 ;;; diss-feh.el ends here
