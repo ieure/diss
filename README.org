@@ -3,8 +3,8 @@
   :ID:       c6336377-321e-44fb-967f-c9d757b1ce84
   :END:
 
-  Diss is an image slideshow for Emacs, based on Dired and
-  =image-mode=.
+  Diss is a full-featured image slideshow for Emacs, based on Dired
+  and =image-mode=.
 
 ** Features
    :PROPERTIES:
@@ -13,11 +13,12 @@
 
    - Use any Dired buffer (including =find-dired=) as the source of
      images.
-   - Manual navigation or automatic advance with delay.
-   - Categorize files: mark, flag for deletion, or apply any marker
-     character.
-   - Automatic advance can also auto-categorize.
-   - Infinite loop, or pop back to Diss buffer when finished.
+   - Manual navigation, or automatic advance with delay.
+   - Easily categorize files: mark, flag for deletion, or apply an
+     arbitrary marker character directly from the image.
+   - Advancing images can optionally apply a marker to every image.
+   - Infinite loop, or pop back to image list when finished.
+   - Multiple slideshow configurations can be named and saved.
    - Quick image tools: Rotate CW/CCW, smart fit, fit height, fit
      width, rename.
 
@@ -31,6 +32,21 @@
    development work happens on GitHub.
 
 
+** Installation
+   :PROPERTIES:
+   :ID:       0b5d0376-da20-4787-925e-62ab369ea5fa
+   :END:
+
+   Diss isn’t in any ELPA repositories, so the easiest method of
+   installation is to use =straight= and =use-package=:
+
+   #+BEGIN_SRC emacs-lisp
+     (use-package diss
+       :straight (diss :host github
+                       :repo "ieure/diss"))
+   #+END_SRC
+
+
 ** Usage
    :PROPERTIES:
    :ID:       94a18a81-8b61-4402-a09e-a3e1f90b19b8
@@ -40,8 +56,8 @@
    saved configuration to use.  Saved configurations associate a name
    to a set of slideshow parameters, i.e. how many images to advance
    by, whether to loop, whether to automatically advance, etc.  The
-   default is ="standard"=, which advances by one image only when the
-   user requests it.
+   default is ="standard"=, which doesn’t mark, loop or automatically
+   advance -- the user controls moving between images.
 
    Entering the name of a configuration which isn’t already known
    prompts for all Diss parameters and saves it.
@@ -62,11 +78,6 @@
      the next.
    - =d=: Flag for deletion and advance.
    - =u=: Unmark and advance.
-   - =c=: Categorize image.  Prompts for Dired mark character, applies
-     it, and advances.
-   - =e=: Add a pr*e*fix to the filename, and advances.  If the file
-     is =foo.jpg=, and you enter =e bar RET=, the file will be renamed
-     to =bar_foo.jpg=.  With a prefix argument, categorizes as well.
    - =r=: Rotate clockwise.  Shadows =image-rotate=.
    - =R=: Rotate counterclockwise.
    - =x=: Resize image to fit window width.
@@ -79,10 +90,67 @@
      advancing.
 
 
-** Comparison with other Emacs slideshow tools
+*** Advanced use
+    :PROPERTIES:
+    :ID:       2a63b4b9-5573-415b-8ee7-89116095cc44
+    :END:
+
+**** Prefix names
+     :PROPERTIES:
+     :ID:       13bf771a-7529-4c0b-8341-6282076d523e
+     :END:
+
+     Prefix names are a way to give a file a human-readable name,
+     while preserving the original.  The file is renamed to have a
+     user-given prefix, followed by an underscore, followed by the
+     existing filename.
+
+     Pressing =e= will prompt for a prefix name to the currently
+     image, and rename it to have it.  If the file already has a
+     prefix name, it’s replaced with the entered one.
+
+
+**** Moving
+     :PROPERTIES:
+     :ID:       cc19a7fe-7047-4d8c-876a-31b0fb8ba37b
+     :END:
+
+     Pressing =v= will prompt for a destination directory, then move
+     the current image to it, and advance to the next image.
+
+
+**** Categorizing and sorting
+     :PROPERTIES:
+     :ID:       e17604f4-1ba9-4d80-a30f-e5e85d0224d3
+     :END:
+
+     Diss can be used to sort large numbers of images.
+
+     Pressing =c= will prompt for a category character, which can be
+     any alphanumeric or symbol.  This character is placed on the file
+     in the Diss buffer.
+
+     The variable =diss-sort-destinations= (which can be customized)
+     is an alist of characters to destination directories.  Pressing
+     =C-c C-c= in the Diss buffer (/not/ on the image) will move all
+     marked files to the corresponding directories in
+     =diss-sort-destinations=.
+
+     Additionally, there’s one special case: If a file has a prefix
+     name which matches a destination directory name, and is marked
+     with =*=, it will be moved to that destination.  This allows
+     images to be marked with =m=, which is more ergonomic than
+     pressing =c a= over and over.
+
+
+** Motivation
    :PROPERTIES:
    :ID:       4bfedd34-44b9-481d-aebb-34dd31febbf3
    :END:
+
+   While there are a number of other Emacs-based ways to deal with
+   large numbers of images, they all have significant drawbacks.
+
 
 *** =image-next-file=
     :PROPERTIES:
@@ -129,4 +197,3 @@
 
    - If you attempt to load a very large image (approximately >
      5000x5000, or 25 megapixels), Emacs will instantly crash.
-   -
