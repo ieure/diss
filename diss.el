@@ -38,6 +38,7 @@
 (defvar diss--all-destinations nil)
 
 (defun diss--compute-possible-destinations (dests)
+  "Return all subdirectories of DESTS."
   (cl-loop for dir in (mapcar #'cdr dests)
            collect dir
            append (cl-loop for subdir in (directory-files-and-attributes dir)
@@ -277,6 +278,7 @@ Passes ARGS to the function specified in `diss--slideshow-class'."
            do (setf (slot-value diss-mode--slideshow slot) v)))
 
 (defun diss--maybe-configure (config-name)
+  "Either return saved CONFIG-NAME, or prompt for & save a new one."
   (unless (assoc config-name diss-saved-configurations)
     (push (cons config-name (diss-read-config)) diss-saved-configurations))
 
@@ -593,6 +595,7 @@ with it."
     (diss-image-mode-next)))
 
 (defun diss-image-mode-rename-file-and-advance (dest-dir)
+  "Move the current image to DEST-DIR."
   (interactive (list (read-directory-name "Move to: ")))
   (with-slots (current buffer) diss-image-mode--slideshow
     (dired-rename-file current dest-dir nil)

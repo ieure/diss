@@ -82,7 +82,7 @@
   (setq-local diss--slideshow-class 'diss-feh-slideshow))
 
 (defun diss-feh--make-list ()
-  "Create the list of files for the slideshow.  Returns path to file list."
+  "Create the list of files for the slideshow.  Return path to file list."
   (let ((save-silently t))
     (make-temp-file "fehdiss" nil nil
                     (with-output-to-string
@@ -93,7 +93,7 @@
                              (princ (concat file "\n"))))))))))
 
 (defun diss-feh--args (filelist)
-  "Return list of command-line arguments to pass to feh."
+  "Return list of arguments to pass to feh to show FILELIST."
   (with-slots (current step delay loop paused) diss-mode--slideshow
     (let ((delay (if (and delay paused) (* -1 delay) delay)))
     `("--scale-down"
@@ -109,7 +109,7 @@
       ,@(when (<= step -1) '("--reverse"))))))
 
 (defun diss-feh--spawn ()
-  "Spawn the feh process.  Returns process object."
+  "Spawn the feh process.  Return process object."
   (when (and diss-feh-mode--process
              (processp diss-feh-mode--process)
              (process-live-p diss-feh-mode--process))
@@ -177,7 +177,7 @@
     (use-local-map diss-feh-image-mode-map)))
 
 (defun diss-feh--exwm-capture ()
-  "Capture feh when it starts up."
+  "Capture feh when it's started."
   (when (and diss-feh-mode--capture (string= exwm-class-name "feh"))
     (setq diss-image-mode--slideshow diss-feh-mode--capture
           diss-feh-mode--capture nil)
@@ -228,14 +228,17 @@
   (exwm-input--fake-key ?<))
 
 (defun diss-feh-image-mode-fit-to-width ()
+  "Fit the current image to the width of the current window."
   (interactive)
   (exwm-input--fake-key ?!))
 
 (defun diss-feh-image-mode-fit-to-height ()
+  "Fit the current image to the height of the current window."
   (interactive)
   (exwm-input--fake-key ?/))
 
 (defun diss-feh-image-mode-transform-reset ()
+  "Display the current image with the default size."
   (interactive)
   (exwm-input--fake-key ?*))
 
