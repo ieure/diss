@@ -60,7 +60,7 @@
   "Pause or resume slideshow THIS."
   (with-slots (feh-buffer) diss-image-mode--slideshow
     (with-current-buffer feh-buffer
-      (setf paused (not(diss-feh--title->paused?)))
+      (setf paused (not (diss-feh--title->paused?)))
       (exwm-input--fake-key ?h))))
 
 (cl-defmethod diss--move ((this diss-feh-slideshow) &optional arg find-function)
@@ -196,6 +196,10 @@
     (if (s-ends-with? " [Paused]" raw)
         (cons (substring raw 0 -9) t)
       (cons raw nil))))
+
+(defun diss-feh--title->paused? ()
+  "Return paused state, based on the feh window title."
+  (cdr (diss-feh--title->state)))
 
 (defun diss-feh--update-title-hook ()
   "Handle title updated events from feh."
