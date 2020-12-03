@@ -391,15 +391,12 @@ With prefix ARG, inverts the value of var `delete-by-moving-to-trash'."
     (setf current (diss-mode--dired-expanded-filename))
     (diss-resume)))
 
-(defun diss--sort-destination-prefix* (prefix)
-  (cl-loop for dest in diss--all-destinations
-           if (string= prefix (file-name-nondirectory dest))
-           return dest))
-
 (defun diss--sort-destination-prefix (filename)
   "Determine the sort destination based on FILENAME's prefix name."
   (when-let ((prefix (car (diss-mode--prefix-and-name filename))))
-    (diss--sort-destination-prefix* prefix)))
+    (cl-loop for dest in diss--all-destinations
+             if (string= prefix (file-name-nondirectory dest))
+             return dest)))
 
 (defun diss--sort-destination-mark (mark)
   "Determine the sort destination based on MARK."
