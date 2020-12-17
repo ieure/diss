@@ -296,7 +296,7 @@ Passes ARGS to the function specified in `diss--slideshow-class'."
 (defun diss--all-prefix-names ()
   "Return a list of all prefix names Diss knows about."
   (cl-remove-duplicates
-   (cl-loop for dir in (mapcar 'cdr diss-sort-destinations)
+   (cl-loop for dir in diss--all-destinations
             append (mapcar 'diss-mode--prefix-name (ignore-errors (directory-files dir nil diss--prefix-name-regexp))))
    :test 'string=))
 
