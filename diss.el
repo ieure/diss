@@ -670,18 +670,18 @@ If ARG is omitted, use the slideshow's step.
 If the end of the slideshow is reached, display the Diss buffer."
   (with-slots (current step) this
     (when-let ((current (or (buffer-file-name) current)))
-      (diss-mode--ensure this current)))
-  (let ((arg (or arg step))
-        (image-transform-resize nil))   ; Don't resize on open
-    (if-let ((next-file (diss-mode--navigate this arg)))
-        (progn
-          ;; If a buffer is showing the file already, kill it.
-          (when-let ((buf (find-buffer-visiting next-file)))
-            (kill-buffer buf))
-          (diss--without-scaling
-           (funcall (or find-function #'find-alternate-file) next-file)))
-      ;; Slideshow is over, show the Diss buffer
-      (pop-to-buffer buffer))))
+      (diss-mode--ensure this current))
+    (let ((arg (or arg step))
+          (image-transform-resize nil))   ; Don't resize on open
+      (if-let ((next-file (diss-mode--navigate this arg)))
+          (progn
+            ;; If a buffer is showing the file already, kill it.
+            (when-let ((buf (find-buffer-visiting next-file)))
+              (kill-buffer buf))
+            (diss--without-scaling
+             (funcall (or find-function #'find-alternate-file) next-file)))
+        ;; Slideshow is over, show the Diss buffer
+        (pop-to-buffer buffer)))))
 
 (defun diss-image-mode-next (&optional arg)
   "Move ARG images forward in the slideshow."
