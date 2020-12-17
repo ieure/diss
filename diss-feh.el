@@ -179,10 +179,10 @@
 (defun diss-feh--exwm-capture ()
   "Capture feh when it's started."
   (when (and diss-feh-mode--capture (string= exwm-class-name "feh"))
-    (setq diss-image-mode--slideshow diss-feh-mode--capture
-          diss-feh-mode--capture nil)
+    (setq diss-image-mode--slideshow diss-feh-mode--capture)
     (with-slots (feh-buffer) diss-image-mode--slideshow
-      (setq feh-buffer (current-buffer)))
+      (setq feh-buffer (current-buffer)
+            diss-feh-mode--capture nil))
 
     ;; Enable fixed geometry mode, this seems to be impossible via the
     ;; commandline.
