@@ -579,13 +579,14 @@ With a prefix arg, prompt for marker char MARKER, and mark file
 with it."
   (interactive
    (list
-    (completing-read
-     "Name: "
-     (with-current-buffer (oref diss-image-mode--slideshow buffer)
-       diss--prefix-name-cache)
-     nil
-     nil
-     (diss-mode--prefix-name (oref diss-image-mode--slideshow current)))
+    (progn (diss-slideshow-pause! diss-image-mode--slideshow)
+           (completing-read
+            "Name: "
+            (with-current-buffer (oref diss-image-mode--slideshow buffer)
+              diss--prefix-name-cache)
+            nil
+            nil
+            (diss-mode--prefix-name (oref diss-image-mode--slideshow current))))
     (when current-prefix-arg (read-char-exclusive "Category char: " t))))
 
   (add-to-list 'diss--prefix-name-cache prefix-name)
@@ -599,7 +600,8 @@ with it."
 
 (defun diss-image-mode-rename-file-and-advance (dest-dir)
   "Move the current image to DEST-DIR."
-  (interactive (list (read-directory-name "Move to: ")))
+  (interactive (list (progn (diss-slideshow-pause! diss-image-mode--slideshow)
+                            (read-directory-name "Move to: "))))
   (with-slots (current buffer) diss-image-mode--slideshow
     (dired-rename-file current dest-dir nil)
     (diss-image-mode-next)))
@@ -707,13 +709,15 @@ If the end of the slideshow is reached, display the Diss buffer."
 
 (defun diss-image-mode-categorize (char)
   "Mark the current image with CHAR."
-  (interactive (list (read-char-exclusive "Category char: " t)))
+  (interactive (list (progn (diss-slideshow-pause! diss-image-mode--slideshow)
+                            (read-char-exclusive "Category char: " t))))
   (when char
     (diss-mode--mark diss-image-mode--slideshow (buffer-file-name) char t)))
 
 (defun diss-image-mode-categorize-and-next (char)
   "Mark the current image with CHAR and advance."
-  (interactive (list (read-char-exclusive "Category char: " t)))
+  (interactive (list (progn (diss-slideshow-pause! diss-image-mode--slideshow)
+                            (read-char-exclusive "Category char: " t))))
   (when char
     (with-slots (current) diss-image-mode--slideshow
       (diss-mode--mark diss-image-mode--slideshow current char t))
