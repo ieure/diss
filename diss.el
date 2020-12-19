@@ -41,11 +41,12 @@
   "Return all subdirectories of DESTS."
   (cl-loop for dir in (mapcar #'cdr dests)
            collect dir
-           append (cl-loop for subdir in (directory-files-and-attributes dir)
-                           unless (string= "." (car subdir))
-                           unless (string= ".." (car subdir))
-                           when (cadr subdir)
-                           collect (concat dir "/" (car subdir)))))
+           append (ignore-errors
+                    (cl-loop for subdir in (directory-files-and-attributes dir)
+                             unless (string= "." (car subdir))
+                             unless (string= ".." (car subdir))
+                             when (cadr subdir)
+                             collect (concat dir "/" (car subdir))))))
 
 (defcustom diss-sort-destinations nil
   "Diss image sorting destinations.
