@@ -118,7 +118,8 @@
   (setq diss-feh-mode--capture diss-mode--slideshow)
   (add-to-list 'exwm-manage-finish-hook 'diss-feh--exwm-capture)
   (let* ((filelist (diss-feh--make-list))
-         (args (diss-feh--args filelist)))
+         (args (diss-feh--args filelist))
+         (ss diss-mode--slideshow))
     (setq diss-feh-mode--process
           (make-process
            :name "diss/feh"
@@ -127,8 +128,7 @@
            :sentinel (lambda (process _message)
                        (when (eq 'exit (process-status process))
                          (delete-file filelist nil))
-                       (with-slots (paused) diss-mode--slideshow
-                         (setf paused t)))))))
+                       (diss-slideshow-pause! ss))))))
 
 (defun diss-feh-resume ()
   "Resume a paused slideshow."
