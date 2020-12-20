@@ -35,6 +35,7 @@
 
  ;; Class
 
+;;;###autoload
 (defclass diss-feh-slideshow (diss-slideshow)
   ((major-mode :initform 'diss-feh-mode
                :documentation "The major mode to control the diss buffer.")
