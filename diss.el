@@ -28,6 +28,7 @@
 
 ;;; Code:
 
+(require 'cl)
 (require 'dired)
 (require 'dired-aux)
 
@@ -320,7 +321,7 @@ Passes ARGS to the function specified in `diss--slideshow-class'."
              do (dired-next-line a)
              for fn = (dired-get-filename t t)
              when (string-match diss-mode--image-regexp (or fn ""))
-             do (decf n)
+             do (cl-decf n)
              finally return fn)))
 
 (defun diss-mode--navigate* (arg)
@@ -434,7 +435,7 @@ there."
            (unless (assoc dest dests-files)
              (push (list dest) dests-files))
            (push file (cdr (assoc dest dests-files)))
-           (incf num-files)))))
+           (cl-incf num-files)))))
     (cons dests-files num-files)))
 
 (cl-defun diss--rename-to ((dest &rest files))
