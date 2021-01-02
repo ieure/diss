@@ -1,6 +1,6 @@
 ;; diss-feh.el --- Diss integration with feh        -*- lexical-binding: t; -*-
 
-;; Copyright (C) 2020  Ian Eure
+;; Copyright (C) 2020, 2021  Ian Eure
 
 ;; Author: Ian Eure <ian@retrospec.tv>
 ;; Keywords: multimedia
@@ -166,6 +166,9 @@
     (define-key km "v" 'diss-image-mode-rename-file-and-advance)
     (define-key km (kbd "SPC") 'diss-image-mode-toggle-paused)
     (define-key km (kbd "<mouse-3>") 'diss-image-mode-toggle-paused)
+
+    ;; Entering fullscreen breaks things pretty bad -- don't allow it.
+    (define-key km "f" nil)
     km)
   "Keymap for DISS-FEH-IMAGE-MODE.")
 
