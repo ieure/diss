@@ -123,7 +123,7 @@ of arguments passed to constructor function `diss-slideshow'."
 
 (cl-defmethod diss-slideshow-pause! ((this diss-slideshow))
   "Pause slideshow THIS."
-  (with-slots (paused) diss-image-mode--slideshow
+  (with-slots (paused) this
     (setf paused t)
     (when diss--timer
       (cancel-timer diss--timer))))

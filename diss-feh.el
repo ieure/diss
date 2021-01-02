@@ -52,14 +52,14 @@
 
 (cl-defmethod diss-slideshow-pause! ((this diss-feh-slideshow))
   "Pause slideshow THIS."
-  (with-slots (feh-buffer) diss-image-mode--slideshow
+  (with-slots (feh-buffer) this
     (with-current-buffer feh-buffer
       (unless (diss-feh--title->paused?)
         (diss-slideshow-toggle-pause! this)))))
 
 (cl-defmethod diss-slideshow-toggle-pause! ((this diss-feh-slideshow))
   "Pause or resume slideshow THIS."
-  (with-slots (feh-buffer) diss-image-mode--slideshow
+  (with-slots (feh-buffer) this
     (with-current-buffer feh-buffer
       (setf paused (not (diss-feh--title->paused?)))
       (exwm-input--fake-key ?h))))
