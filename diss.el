@@ -590,9 +590,11 @@ with it."
             (diss-mode--prefix-name (oref diss-image-mode--slideshow current))))
     (when current-prefix-arg (read-char-exclusive "Category char: " t))))
 
-  (add-to-list 'diss--prefix-name-cache prefix-name)
+  (unless (string-empty-p prefix-name)
+    (add-to-list 'diss--prefix-name-cache prefix-name))
   (let* ((bfn (oref diss-image-mode--slideshow current))
-         (new-name (concat prefix-name "_" (cdr (diss-mode--prefix-and-name bfn)))))
+         (new-name (if (string-empty-p prefix-name) (cdr (diss-mode--prefix-and-name bfn))
+                     (concat prefix-name "_" (cdr (diss-mode--prefix-and-name bfn))))))
     (with-current-buffer (oref diss-image-mode--slideshow buffer)
       (let ((marker (or marker (dired-file-marker bfn))))
         (dired-rename-file bfn new-name nil)
