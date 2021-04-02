@@ -108,6 +108,8 @@
       "--filelist" ,filelist
       "--no-recursive"
       "--draw-filename"
+      "--borderless"
+      "--hide-pointer"
       "--start-at" ,current
       ,@(when (<= step -1) '("--reverse"))))))
 
