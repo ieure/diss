@@ -190,6 +190,27 @@
       advance images.
 
 
+** feh
+   :PROPERTIES:
+   :ID:       8b7cc089-661e-4d28-9784-e0669bfc22f3
+   :END:
+
+   Emacs’ performance with images, especially large ones, is not
+   great.  For this reason, Diss has a backend that uses [[https://feh.finalrewind.org/][feh]] to
+   display images.
+
+   Currently, *it requires EXWM*.  Breaking this dependency would mean that
+   feh can only be used as a viewer, with none of the
+   marking/renaming/sorting functionality.  This is likely to happen,
+   but unfortunate.
+
+   To enable the feh backend, set =diss--slideshow-class=:
+
+   #+BEGIN_SRC emacs-lisp
+     (setq diss--slideshow-class 'diss-feh-slideshow)
+   #+END_SRC
+
+
 ** Limitations
    :PROPERTIES:
    :ID:       b1e38bbb-f3f5-448f-91ed-044565d63131
